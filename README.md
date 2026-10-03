@@ -141,6 +141,28 @@ python3 scripts/holyshit-inject.py --chain "run the 405 matrix"
 python3 scripts/holyshit-inject.py --consensus "assess auth seams"
 ```
 
+### Simplified: Unified CLI
+
+The `holyshit.py` entrypoint wraps dispatch + converge into one command:
+
+```bash
+export HOLYSHIT_ENDPOINT=http://<host>:<port>/v1
+export HOLYSHIT_MODELS=model-a,model-b
+
+# dispatch a task (single or consensus)
+python3 scripts/holyshit.py run "run the 405 matrix"
+python3 scripts/holyshit.py dispatch --consensus "assess auth seams"
+python3 scripts/holyshit.py dispatch --chain "audit the login flow"   # artifact-first
+
+# converge a candidate chain to CONFIRMED/BLOCKED/HYPOTHESIS
+python3 scripts/holyshit.py converge --budget 12 "SSRF -> IMDS -> cloud creds"
+
+# full loop: dispatch, then converge the confirmation (one command)
+python3 scripts/holyshit.py scan "verify the webhook replay vector"
+```
+
+Exit codes: `0` ok · `1` blocked/harness-fail · `2` bad usage/env · `3` budget-exhausted.
+
 ### 3. Run Verification
 
 ```bash
@@ -214,6 +236,8 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `references/operational-playbooks.md` | Per-target-type workflows | 196 |
 | `references/detection-evasion-modules.md` | Purple-team stealth validation | 143 |
 | `references/exploit-priority-scoring.md` | Probe scoring + attack-path engine + sweep-state | 120 |
+| `scripts/holyshit.py` | Unified entrypoint: run / scan / converge / dispatch | 98 |
+| `scripts/test_holyshit_cli.py` | CI wiring test for the unified CLI | 41 |
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |
 | `scripts/test_holyconverge.py` | CI convergence harness (paths: confirm/block/exhaust/guard) | 67 |

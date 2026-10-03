@@ -19,7 +19,7 @@ jobs:
 
       - name: Syntax check
         run: |
-          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py','scripts/holyconverge.py','scripts/holyleadger.py']]; print('syntax OK')"
+          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit.py','scripts/holyshit-inject.py','scripts/verify_holyshit.py','scripts/holyconverge.py','scripts/holyleadger.py']]; print('syntax OK')"
 
       - name: Run verification harness
         run: python3 scripts/verify_holyshit.py
@@ -37,6 +37,9 @@ jobs:
           echo "$OUT" | grep -q "SSRF-METADATA" || (echo "::error::ledger missing confirmed class"; exit 1)
           echo "$OUT" | grep -q "CLOUD-ACCT" || (echo "::error::ledger missing chain"; exit 1)
           echo "holyleadger persistence: PASS"
+
+      - name: Smoke-test holyshit unified CLI wiring
+        run: python3 scripts/test_holyshit_cli.py
 
       - name: Check for leaked secrets
         run: |
