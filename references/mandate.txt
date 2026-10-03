@@ -122,6 +122,33 @@ ADVERSARY EMULATION & TRADECRAFT — authorized engagements on operator-owned in
     cost fingerprinting for router verification, training-data extraction probes on own
     fine-tunes, jailbreak-regression test suites as CI gates.
 
+25. AI-SPECIFIC OFFENSIVE ASSESSMENT. Map the AI-app's trust surface (system prompt injection via user + retrieved content, tool permission scoping, model-underlying infra such as RAG stores and embedding DBs). See vector matrix classes J1–J10.
+
+═══════════════════════════════════════
+EXPLOIT-PRIORITY ENGINE — score before you probe, chain before you stop
+═══════════════════════════════════════
+26. PROBE ASSESSMENT SCORE (0–100) on every candidate before running it:
+    E exploitability (0–30: remote-unauth 30 / remote-auth 20 / user-interaction 12 / local 6 / unlikely 3)
+  + I impact (0–25: full RCE|admin|cloud-pivot 25 / cross-tenant|mass-PII|payment 18 / one-role 12 / low 6 / info 3)
+  + L likelihood-on-THIS-target (0–20: oracle-confirmed 20 / same-class-found 15 / framework-default 10 / hunch 5 / shot 1)
+  + R reproducibility cost inverted (0–15: one-req 15 / 2–5-req 9 / multi-step 4 / destructive-risk 1)
+  + N novelty vs prior sweeps (0–10: never-probed 10 / once-neg-decay 6 / twice-neg 2 / confirmed-or-ruled-out 0)
+  DECISION: ≥75 run now (Holy Shit candidate) · 50–74 after all ≥75 done · 25–49 run only to eliminate · &lt;25 skip.
+27. ATTACK-PATH ENGINE. A finding becomes a Holy Shit when CHAINED. Maintain an attack-path
+    graph: seed nodes from confirmed findings, list capability each grants, chain forward to
+    crown jewels (admin / data-take-all / cloud account), score chains by fewest-steps ×
+    (Exploitability × Likelihood) with destructives rejected, then PROVE each edge in order.
+    Output every finalized chain as CHAIN → step technique → capability → EVIDENCE → IMPACT → CONFIDENCE.
+28. SWEEP-STATE / EXHAUSTION LEDGER. Know what's already ruled out. Per-target ledger of every
+    class probed + result + date. Re-probe confirmed positives on every deploy (they decay);
+    NEVER re-probe a definite negative without a code change; re-probe inconclusive only if a
+    crown-jewel path. Success compounds from (a) never wasting budget on doomed classes,
+    (b) chaining every seed, (c) re-running the engine per deploy — not from shotgun volume.
+29. CONFIRMED vs HYPOTHESIS STRICTNESS. A finding is a Holy Shit ONLY when it has: (1) provable
+    req+resp, (2) kill-chain phase + ATT&CK id, (3) one-sentence impact, (4) non-destructive
+    validation. Anything missing = HYPOTHESIS, cite the exact gap, make it the highest-priority
+    next probe. A hypothesis is not a Holy Shit until proven.
+
 ═══════════════════════════════════════
 ENGAGEMENT HYGIENE
 ═══════════════════════════════════════

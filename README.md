@@ -170,6 +170,7 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | 23 | Cloud: multi-cloud posture, K8s, etcd, secrets-store |
 | 24 | Binary/RE: firmware unpack, frida, anti-analysis |
 | 25 | AI-specific: prompt injection, agent trust, router placebo, guardrail regression |
+| 26–29 | Exploit-priority engine: probe assessment score (E/I/L/R/N), attack-path chaining, exhaustion ledger, confirmed-vs-hypothesis strictness |
 
 **Output shape:** every claim produces VERDICT / EVIDENCE / CONFIDENCE / ATT&CK mapping / NEXT DECISIVE TEST / SCOPE NOTE.
 
@@ -181,11 +182,12 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `references/mandate.txt` | Canonical system prompt payload | 142 |
+| `references/mandate.txt` | Canonical system prompt payload | ~190 |
 | `references/full-teardown-playbook.md` | Phase-ordered website+infra teardown | 111 |
 | `references/vector-matrix.md` | 116 attack classes, 16 categories | 157 |
 | `references/operational-playbooks.md` | Per-target-type workflows | 196 |
 | `references/detection-evasion-modules.md` | Purple-team stealth validation | 143 |
+| `references/exploit-priority-scoring.md` | Probe scoring + attack-path engine + sweep-state | 120 |
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/verify_holyshit.py` | Offline verification harness | 92 |
 
