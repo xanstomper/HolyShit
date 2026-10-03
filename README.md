@@ -1,8 +1,6 @@
 # HolyShit! — Red-Team Mandate & Engagement Framework
 
 **Version:** 2.0.0  
-**Author:** Aporia 
-**License:** MIT  
 **Platform:** Linux (any OpenAI-compatible endpoint)
 
 ---
