@@ -159,13 +159,15 @@ python3 scripts/holyshit.py converge --budget 12 "SSRF -> IMDS -> cloud creds"
 
 # full loop: dispatch, then converge the confirmation (one command)
 python3 scripts/holyshit.py scan "verify the webhook replay vector"
+
+# let the framework decide what to probe next (reads ledger, emits ordered queue)
+python3 scripts/holyshit.py plan
+python3 scripts/holyshit.py plan --top 20 --target api.example.com
 ```
 
-With `HOLYSHIT_TARGET` exported, `scan` and `converge` **auto-persist** the outcome to the
-ledger — confirmed results land as a confirmed class + chain; blocked/exhausted results land
-as a hypothesis — so the ledger stays the single source of truth with no manual `add`.
+With `HOLYSHIT_TARGET` exported, `scan` and `converge` **auto-persist** their outcome to the ledger (confirmed → class + chain; blocked/exhausted → hypothesis). `plan` reads that ledger state via `holyleadger next` and emits an ordered, ready-to-run probe queue — the operator no longer decides what to probe, the framework does. It maps each actionable class to a high-yield probe template (SSRF, IDOR, JWT, auth seam, etc.) and prints `holyshit scan` commands in score order. Re-run `plan` after each scan to re-rank.
 
-Exit codes: `0` ok · `1` blocked/harness-fail · `2` bad usage/env · `3` budget-exhausted.
+Exit codes: `0` ok · `1` blocked/harness-fail · `2` bad usage/env · `3` budget-exhausted(converge).
 
 ### 3. Run Verification
 
@@ -245,7 +247,7 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `references/operational-playbooks.md` | Per-target-type workflows | 196 |
 | `references/detection-evasion-modules.md` | Purple-team stealth validation | 143 |
 | `references/exploit-priority-scoring.md` | Probe scoring + attack-path engine + sweep-state | 120 |
-| `scripts/holyshit.py` | Unified entrypoint: run / scan / converge / dispatch + auto-persist | 118 |
+| `scripts/holyshit.py` | Unified entrypoint: plan/run/scan/converge/dispatch + auto-persist | 218 |
 | `scripts/test_holyshit_cli.py` | CI wiring test for the unified CLI (+ persist calls) | 44 |
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |

@@ -55,6 +55,11 @@ jobs:
           LEDGER_FILE="$HOLYSHIT_SCRIPT_DIR/holyleadger/persist.test.json"
           [ -f "$LEDGER_FILE" ] || (echo "::error::ledger file not written at $LEDGER_FILE"; exit 1)
           grep -q '"confirmed"' "$LEDGER_FILE" || exit 1
+          # plan reads ledger next-state and emits ordered scan commands
+          PLAN=$(python3 scripts/holyshit.py plan --target persist.test --top 5)
+          echo "$PLAN" | grep -q "HOLYSHIT PLAN" || (echo "::error::plan missing header"; exit 1)
+          echo "$PLAN" | grep -q "auto-probe" || (echo "::error::plan missing class from ledger"; exit 1)
+          echo "$PLAN" | grep -q "scan" || (echo "::error::plan missing scan command"; exit 1)
           # report renders from the ledger
           REPORT=$(python3 scripts/holyleadger.py report --target persist.test)
           echo "$REPORT" | grep -q "Confirmed Holy Shits" || (echo "::error::report missing confirmed section"; exit 1)
