@@ -1,0 +1,51 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Syntax check
+        run: |
+          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py']]; print('syntax OK')"
+
+      - name: Run verification harness
+        run: python3 scripts/verify_holyshit.py
+
+      - name: Check for leaked secrets
+        run: |
+          if grep -rniE "sk-[a-z0-9]{20,}|gho_[a-z0-9]{20,}|api[_-]?key.*=.*['\"][a-z0-9]{20,}|bearer [a-z0-9]{20,}" \
+            --include="*" . 2>/dev/null | grep -v ".env.example" | grep -v "HOLYSHIT_API_KEY"; then
+            echo "::error::Potential secret leaked in repo files"
+            exit 1
+          else
+            echo "No secrets found"
+          fi
+
+      - name: Validate README line counts
+        run: |
+          MANDATE_LINES=$(wc -l < references/mandate.txt)
+          MATRIX_CLASSES=$(grep -c "^- " references/vector-matrix.md)
+          MATRIX_CATS=$(grep -c "^## " references/vector-matrix.md)
+          echo "mandate: ${MANDATE_LINES} lines"
+          echo "vector-matrix: ${MATRIX_CLASSES} classes, ${MATRIX_CATS} categories"
+          if [ "$MANDATE_LINES" -lt 100 ]; then
+            echo "::error::Mandate shrank below 100 lines — check for accidental truncation"
+            exit 1
+          fi
+          if [ "$MATRIX_CLASSES" -lt 100 ]; then
+            echo "::error::Vector matrix shrank below 100 classes — check for accidental truncation"
+            exit 1
+          fi
