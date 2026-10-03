@@ -189,6 +189,8 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `references/detection-evasion-modules.md` | Purple-team stealth validation | 143 |
 | `references/exploit-priority-scoring.md` | Probe scoring + attack-path engine + sweep-state | 120 |
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
+| `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |
+| `scripts/test_holyconverge.py` | CI convergence harness (paths: confirm/block/exhaust/guard) | 67 |
 | `scripts/verify_holyshit.py` | Offline verification harness | 92 |
 
 ---

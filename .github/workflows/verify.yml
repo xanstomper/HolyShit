@@ -19,10 +19,13 @@ jobs:
 
       - name: Syntax check
         run: |
-          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py']]; print('syntax OK')"
+          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py','scripts/holyconverge.py']]; print('syntax OK')"
 
       - name: Run verification harness
         run: python3 scripts/verify_holyshit.py
+
+      - name: Check holyconverge convergence logic
+        run: python3 scripts/test_holyconverge.py
 
       - name: Check for leaked secrets
         run: |
