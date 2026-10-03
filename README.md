@@ -7,6 +7,75 @@
 
 ---
 
+## What Is a Holy Shit?
+
+A **Holy Shit** is a finding that changes the risk calculus of an entire engagement. Not a
+medium-severity misconfiguration or a theoretically-exploitable edge case — a confirmed,
+evidence-backed vulnerability that would make a CISO's stomach drop.
+
+**The bar for Holy Shit status:**
+
+| Finding | Why it's Holy Shit |
+|---------|-------------------|
+| Remote code execution on production | Full compromise of the target's infrastructure |
+| Auth bypass on admin/superuser endpoints | Complete control without any credentials |
+| Cross-tenant data access in multi-tenant SaaS | Every customer's data exposed through one API call |
+| Cloud credential theft via SSRF/IMDS | Pivot from web app to entire cloud account |
+| Stateless payment/claim verification gate | Unlimited fraud with two HTTP requests |
+| Subdomain takeover via dangling CNAME | Full site impersonation, cookie theft, phishing platform |
+| Session fixation via URL parameters | Hijack any user's session by sending them a link |
+| Deployed sourcemaps (.map files) | Full original source code including secrets, logic, internal APIs |
+| Public bucket with database dumps | Mass PII exposure without touching the target's servers |
+| Rate limiter keyed to spoofable header | Unlimited brute-force budget by changing one HTTP header |
+
+**What is NOT a Holy Shit:** XSS on a logout page, missing security headers, version
+disclosure, directory listing on a static asset server, SSL certificate expiry. These are
+findings — they go in the report, they don't get the designation.
+
+**Why the framework finds them when others don't:** most scanners look for known signatures.
+Holy Shit findings are logic flaws, race conditions, stateless verification gaps, client-only
+trust boundaries, and infrastructure rot that no signature database contains. Finding them
+requires understanding how the target *thinks* — what it trusts, what it forgot, what it
+assumed. That's why the mandate is doctrine-driven, not signature-driven.
+
+**Detection:** a Holy Shit is confirmed when you can articulate the full kill-chain position
+(what phase, what technique), the evidence (request + response + timestamp), and the impact
+(what an attacker gains, in one sentence). If any of those three is missing, it's a hypothesis,
+not a Holy Shit.
+
+---
+
+## Why It Works
+
+**1. Doctrine over signatures.** Traditional scanners match known-bad patterns. HolyShit!
+teaches the model to reason about trust boundaries, state machines, and authorization
+chains — the classes of bugs that signatures can't catch.
+
+**2. Verdict-first pacing.** The mandate demands the minimum decisive test before any
+extended probing. One well-placed request that proves auth bypass is worth more than 200
+requests that suggest it might exist. This keeps engagements fast and findings clean.
+
+**3. Kill-chain discipline.** Every action maps to a phase and a stated objective. No
+unfocused wandering. If phase 3 (execution) requires phase 1 (recon) output that hasn't
+been gathered, the mandate says so and gathers it — no skipping ahead.
+
+**4. Evidence-first reporting.** Every claim carries request, response, timestamp. No
+"trust me bro." Findings are reproducible or they're not findings.
+
+**5. Stale-finding discipline.** On actively-defended targets, confirmed findings decay in
+hours. The mandate requires fresh decisive tests before re-asserting any prior result —
+no citing yesterday's confirmed bypass when the operator patched it this morning.
+
+**6. Scope gate precision.** The mandate knows exactly what it won't do — government,
+schools, kids, hospitals, OT/ICS — and holds that line regardless of framing. This is
+what makes it deployable on real engagements with real legal review.
+
+**7. Model-agnostic dispatch.** The mandate is a system prompt payload. It works on any
+OpenAI-compatible endpoint — local inference, self-hosted models, agent CLIs. No lock-in,
+no special tooling required.
+
+---
+
 ## What It Is
 
 HolyShit! is a **mandate persona** — a system-prompt payload plus an operating doctrine — for offensive-security engagements. It injects into any agent session or OpenAI-compatible endpoint where the operator controls the system prompt: local model servers, self-hosted inference, agent CLIs, or any harness that accepts a system message.
