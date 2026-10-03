@@ -19,13 +19,24 @@ jobs:
 
       - name: Syntax check
         run: |
-          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py','scripts/holyconverge.py']]; print('syntax OK')"
+          python3 -c "import ast; [ast.parse(open(f).read()) for f in ['scripts/holyshit-inject.py','scripts/verify_holyshit.py','scripts/holyconverge.py','scripts/holyleadger.py']]; print('syntax OK')"
 
       - name: Run verification harness
         run: python3 scripts/verify_holyshit.py
 
       - name: Check holyconverge convergence logic
         run: python3 scripts/test_holyconverge.py
+
+      - name: Smoke-test holyleadger persistence
+        run: |
+          export HOLYSHIT_SCRIPT_DIR=$(mktemp -d)
+          python3 scripts/holyleadger.py add SSRF-METADATA confirmed --score 90 --target smoke.test >/dev/null
+          python3 scripts/holyleadger.py add WPA2-PMKID negative --target smoke.test >/dev/null
+          python3 scripts/holyleadger.py chain CLOUD-ACCT SSRF-METADATA→IMDS→CREDS:confirmed --target smoke.test >/dev/null
+          OUT=$(python3 scripts/holyleadger.py status --target smoke.test)
+          echo "$OUT" | grep -q "SSRF-METADATA" || (echo "::error::ledger missing confirmed class"; exit 1)
+          echo "$OUT" | grep -q "CLOUD-ACCT" || (echo "::error::ledger missing chain"; exit 1)
+          echo "holyleadger persistence: PASS"
 
       - name: Check for leaked secrets
         run: |

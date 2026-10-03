@@ -148,6 +148,32 @@ python3 scripts/verify_holyshit.py
 # 15 checks: verdict extraction, CF-UA headers, consensus retry, FAILED reporting
 ```
 
+### 4. Persist Engagement State (doctrine §28)
+
+`holyleadger.py` saves sweep-state across sessions so you never re-probe a ruled-out class:
+
+```bash
+export HOLYSHIT_TARGET=example.com                     # default target
+
+# record a probe result
+python3 scripts/holyleadger.py add SSRF-METADATA confirmed --score 90 --technique "SSRF→IMDS"
+python3 scripts/holyleadger.py add WPA2-PMKID negative
+
+# record a finalized attack-path chain
+python3 scripts/holyleadger.py chain CLOUD-ACCOUNT "SSRF→IMDS→CREDS:confirmed" --impact "pivot to cloud"
+
+# see everything, or the prioritized next actions
+python3 scripts/holyleadger.py status
+python3 scripts/holyleadger.py next --top 10
+
+# start clean (destructive)
+python3 scripts/holyleadger.py reset
+```
+
+Ledger JSON lives at `~/.hermes/scripts/holyleadger/<target>.json`. `next` excludes
+definite negatives (per doctrine §28) and flags confirmed classes for re-verification,
+which decay on every deploy.
+
 ---
 
 ## Mandate Structure
@@ -191,6 +217,7 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |
 | `scripts/test_holyconverge.py` | CI convergence harness (paths: confirm/block/exhaust/guard) | 67 |
+| `scripts/holyleadger.py` | Persistent engagement state: add/chain/status/next/reset (doctrine §28) | 172 |
 | `scripts/verify_holyshit.py` | Offline verification harness | 92 |
 
 ---
