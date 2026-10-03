@@ -28,14 +28,17 @@ def check_sub(name, argv, want):
 check_sub("run -> dispatch", ["h", "run", "hello"], "holyshit-inject")
 check_sub("converge -> holyconverge", ["h", "converge", "chain"], "holyconverge")
 check_sub("dispatch --chain", ["h", "dispatch", "--chain", "t"], "holyshit-inject")
-check_sub("scan -> both", ["h", "scan", "candidate"], None)  # composite, check len below
+# scan behavior: dispatch(inject) -> converge -> auto-persist(add+chain) = 4 calls
+check_sub("scan -> both", ["h", "scan", "candidate"], None)  # composite, checked below
 
-# scan should have made 2 calls (inject + converge)
 calls.clear()
 sys.argv = ["h", "scan", "candidate"]; rc = h.main(); sys.argv = _orig
-scan_ok = rc == 0 and len(calls) == 2 and "holyshit-inject" in calls[0][1] and "holyconverge" in calls[1][1]
-print(("PASS " if scan_ok else "FAIL ") + f"scan makes both calls (calls={len(calls)})")
-if not scan_ok: fails.append("scan both")
+progs = [c[1] for c in calls]
+scan_ok = rc == 0 and len(calls) == 4 and \
+          "holyshit-inject" in progs[0] and "holyconverge" in progs[1] and \
+          "holyleadger" in progs[2] and "holyleadger" in progs[3]
+print(("PASS " if scan_ok else "FAIL ") + f"scan runs inject+converge+persist (calls={len(calls)})")
+if not scan_ok: fails.append("scan persistence")
 
 print()
 print("ALL PASS" if not fails else f"FAILURES: {fails}")

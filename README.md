@@ -161,6 +161,10 @@ python3 scripts/holyshit.py converge --budget 12 "SSRF -> IMDS -> cloud creds"
 python3 scripts/holyshit.py scan "verify the webhook replay vector"
 ```
 
+With `HOLYSHIT_TARGET` exported, `scan` and `converge` **auto-persist** the outcome to the
+ledger — confirmed results land as a confirmed class + chain; blocked/exhausted results land
+as a hypothesis — so the ledger stays the single source of truth with no manual `add`.
+
 Exit codes: `0` ok · `1` blocked/harness-fail · `2` bad usage/env · `3` budget-exhausted.
 
 ### 3. Run Verification
@@ -236,8 +240,8 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `references/operational-playbooks.md` | Per-target-type workflows | 196 |
 | `references/detection-evasion-modules.md` | Purple-team stealth validation | 143 |
 | `references/exploit-priority-scoring.md` | Probe scoring + attack-path engine + sweep-state | 120 |
-| `scripts/holyshit.py` | Unified entrypoint: run / scan / converge / dispatch | 98 |
-| `scripts/test_holyshit_cli.py` | CI wiring test for the unified CLI | 41 |
+| `scripts/holyshit.py` | Unified entrypoint: run / scan / converge / dispatch + auto-persist | 118 |
+| `scripts/test_holyshit_cli.py` | CI wiring test for the unified CLI (+ persist calls) | 44 |
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |
 | `scripts/test_holyconverge.py` | CI convergence harness (paths: confirm/block/exhaust/guard) | 67 |

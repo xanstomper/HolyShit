@@ -53,7 +53,27 @@ def cmd_converge(args):
     cli = ["--budget", str(getattr(args, "budget", 12)), "--minproof",
            str(getattr(args, "minproof", 2)), args.task]
     p = _run(SCRIPTS["converge"], cli)
-    return p.returncode
+    rc = p.returncode
+    _persist_converge_outcome(args, rc)
+    return rc
+
+def _persist_converge_outcome(args, rc):
+    """Auto-persist a converge result to the ledger (closes the dispatch->persist loop).
+    Only when a target is set; derives a stable class ID from the task string."""
+    target = os.environ.get("HOLYSHIT_TARGET", "")
+    if not target:
+        return
+    class_id = _slug(args.task)
+    if rc == 0:   # CONFIRMED
+        _run(SCRIPTS["leadger"], ["add", class_id, "confirmed", "--target", target])
+        _run(SCRIPTS["leadger"], ["chain", class_id, f"DISPATCHED→{class_id}:confirmed",
+                                  "--target", target, "--impact", args.task[:200]])
+    elif rc in (1, 3):  # BLOCKED or budget-exhausted -> hypothesis (gap not auto-known)
+        _run(SCRIPTS["leadger"], ["add", class_id, "hypothesis", "--target", target])
+
+def _slug(s: str) -> str:
+    import re
+    return re.sub(r"[^A-Za-z0-9._-]", "_", s).strip("_")[:64] or "task"
 
 def cmd_scan(args):
     """dispatch then converge: the full confirm loop on one task."""
