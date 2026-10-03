@@ -192,13 +192,18 @@ python3 scripts/holyleadger.py chain CLOUD-ACCOUNT "SSRF→IMDS→CREDS:confirme
 python3 scripts/holyleadger.py status
 python3 scripts/holyleadger.py next --top 10
 
+# emit a remediate-ranked markdown findings report (stdout or file)
+python3 scripts/holyleadger.py report
+python3 scripts/holyleadger.py report --out engagement-report.md
+
 # start clean (destructive)
 python3 scripts/holyleadger.py reset
 ```
 
 Ledger JSON lives at `~/.hermes/scripts/holyleadger/<target>.json`. `next` excludes
 definite negatives (per doctrine §28) and flags confirmed classes for re-verification,
-which decay on every deploy.
+which decay on every deploy. `report` ranks confirmed > hypothesis > negative by score
+and includes attack-path chains with a remediation-priority section.
 
 ---
 
@@ -245,7 +250,7 @@ The mandate (`references/mandate.txt`) is 142 lines, 25 sections:
 | `scripts/holyshit-inject.py` | Generic dispatcher | 188 |
 | `scripts/holyconverge.py` | Confirmation loop: N-model consensus → CONFIRMED/BLOCKED/HYPOTHESIS | 157 |
 | `scripts/test_holyconverge.py` | CI convergence harness (paths: confirm/block/exhaust/guard) | 67 |
-| `scripts/holyleadger.py` | Persistent engagement state: add/chain/status/next/reset (doctrine §28) | 172 |
+| `scripts/holyleadger.py` | Persistent engagement state: add/chain/status/next/report/reset | 259 |
 | `scripts/verify_holyshit.py` | Offline verification harness | 92 |
 
 ---

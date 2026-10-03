@@ -21,6 +21,7 @@ Commands:
   chain  JEWEL STEPS-STATUS [--impact ...]             record a finalized chain
   status [--target T] [--class CLASS]                  show table (confirmed/hypothesis/negative)
   next   [--top N]                                     list highest-value unprobed/actionable classes
+  report [--out FILE]                                  remediate-ranked markdown findings report
   reset                                                clear a target's ledger (destructive)
 
 Env: HOLYSHIT_SCRIPT_DIR overrides the ledger home; HOLYSHIT_TARGET sets default target.
@@ -139,6 +140,88 @@ def cmd_reset(target):
     print("no ledger for target")
     return 0
 
+def cmd_report(target, out=None):
+    """Emit a remediate-ranked markdown findings report from the ledger.
+    Ranks: confirmed>&inconclusive>hypothesis, then by score desc. Writes to --out
+    (default stdout). Returns 0."""
+    data = load(target)
+    classes = data.get("classes", {})
+    chains = data.get("chains", [])
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    # rank order: confirmed(3) > inconclusive(2) > hypothesis(1) > negative(0), by score desc
+    _rank = {"confirmed": 3, "inconclusive": 2, "hypothesis": 1, "negative": 0}
+    ordered = sorted(classes.items(),
+                     key=lambda kv: (-_rank.get(kv[1].get("status", ""), 0),
+                                     -(kv[1].get("score", 0) or 0)))
+    conf = sum(1 for c in classes.values() if c.get("status") == "confirmed")
+    hyp = sum(1 for c in classes.values() if c.get("status") == "hypothesis")
+    neg = sum(1 for c in classes.values() if c.get("status") == "negative")
+
+    L = []
+    L.append(f"# Engagement Report — {target}")
+    L.append("")
+    L.append(f"**Generated:** {now}  ")
+    L.append(f"**Classes tracked:** {len(classes)}  ")
+    L.append(f"**Confirmed:** {conf} · **Hypothesis:** {hyp} · **Negative (ruled out):** {neg}  ")
+    L.append(f"**Chains:** {len(chains)}")
+    L.append("")
+    L.append("---")
+    L.append("")
+    L.append("## Confirmed Holy Shits")
+    L.append("")
+    if conf == 0:
+        L.append("_None yet._")
+    for cid, rec in ordered:
+        if rec.get("status") == "confirmed":
+            L.append(f"### `{cid}`")
+            L.append(f"- **Score:** {rec.get('score','-')}  ")
+            L.append(f"- **Technique:** {rec.get('technique','—')}  ")
+            L.append(f"- **Probed:** {rec.get('probe_count',0)}x, last {rec.get('last_probed','?')}")
+            L.append("")
+    L.append("## Hypotheses (need proof)")
+    L.append("")
+    if hyp == 0:
+        L.append("_None._")
+    for cid, rec in ordered:
+        if rec.get("status") == "hypothesis":
+            L.append(f"- `{cid}` — score {rec.get('score','-')} · probed {rec.get('probe_count',0)}x")
+    L.append("")
+    L.append("## Ruled Out (negative)")
+    L.append("")
+    if neg == 0:
+        L.append("_None._")
+    for cid, rec in ordered:
+        if rec.get("status") == "negative":
+            L.append(f"- `{cid}` — probed {rec.get('probe_count',0)}x, last {rec.get('last_probed','?')}")
+    L.append("")
+    L.append("## Attack Paths")
+    L.append("")
+    if not chains:
+        L.append("_No chains recorded._")
+    for c in chains:
+        st = c.get("status", "hypothesis")
+        L.append(f"### {c.get('crown_jewel','?')} _({st})_")
+        L.append(f"- **Steps:** {' → '.join(c.get('steps', []))}  ")
+        L.append(f"- **Impact:** {c.get('impact','')}")
+        L.append("")
+    L.append("---")
+    L.append("")
+    L.append("## Remediation Priority")
+    L.append("")
+    L.append("1. **Confirmed holyshits** — fix first (RCE, admin bypass, cross-tenant data, cloud cred theft).")
+    L.append("2. **Confirmed chains** — each step is a dependency; fix the base primitive first.")
+    L.append("3. **Hypotheses** — prove or dismiss with the next decisive test (see `next`).")
+    L.append("4. **Re-verify confirmed on every deploy** — findings decay; a patch may not hold.")
+    L.append("")
+    report = "\n".join(L)
+    if out:
+        pathlib.Path(out).write_text(report)
+        print(f"report written -> {out}")
+    else:
+        print(report)
+    return 0
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="holyleadger", description="persistent HolyShit! engagement state")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -152,6 +235,8 @@ def main() -> int:
     n = sub.add_parser("next");           n.add_argument("--target", default=os.environ.get("HOLYSHIT_TARGET",""))
     n.add_argument("--top", type=int, default=5)
     r = sub.add_parser("reset");          r.add_argument("--target", default=os.environ.get("HOLYSHIT_TARGET",""))
+    rep = sub.add_parser("report");       rep.add_argument("--target", default=os.environ.get("HOLYSHIT_TARGET",""))
+    rep.add_argument("--out")
     args = ap.parse_args()
 
     if not args.target:
@@ -167,6 +252,8 @@ def main() -> int:
         return cmd_next(args.target, args.top)
     if args.cmd == "reset":
         return cmd_reset(args.target)
+    if args.cmd == "report":
+        return cmd_report(args.target, getattr(args, "out", None))
     return 0
 
 if __name__ == "__main__":
