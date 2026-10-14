@@ -41,7 +41,18 @@ def load(target: str) -> dict:
     p = _path(target)
     if p.exists():
         try:
-            return json.loads(p.read_text())
+            data = json.loads(p.read_text())
+            if isinstance(data, dict):
+                data.setdefault("classes", {})
+                data.setdefault("chains", [])
+                data.setdefault("meta", {})
+                if not isinstance(data["classes"], dict):
+                    data["classes"] = {}
+                if not isinstance(data["chains"], list):
+                    data["chains"] = []
+                if not isinstance(data["meta"], dict):
+                    data["meta"] = {}
+                return data
         except json.JSONDecodeError:
             pass
     return {"classes": {}, "chains": [], "meta": {}}

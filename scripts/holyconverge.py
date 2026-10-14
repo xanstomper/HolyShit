@@ -122,8 +122,9 @@ def main() -> int:
 
         print(f"--- round {round_no} (calls used {spent}/{budget}) ---")
         for r in results:
-            st = r.get("ok") and verdict_of(r["text"]) or "ERROR"
-            print(f"  [{r['model']}] {st} :: {r['text'][:120]}")
+            txt = r.get("text") or r.get("error") or "<no response>"
+            st = r.get("ok") and verdict_of(txt) or "ERROR"
+            print(f"  [{r['model']}] {st} :: {txt[:120]}")
         print(f"  aggregate -> confirmed={confirmed} blocked={blocked} {echoed}")
 
         if confirmed >= minproof:
