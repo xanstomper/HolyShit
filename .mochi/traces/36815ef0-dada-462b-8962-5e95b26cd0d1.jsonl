@@ -1,0 +1,172 @@
+{"t":1791988959760,"kind":"task:started","agentId":"","task":{"id":"36f12eda-b215-4ae0-abbd-6d66f6d57f5a","title":"u need to find real holy shits","description":"u need to find real holy shits","role":"coder","status":"running","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"createdAt":1791988959759,"startedAt":1791988959760},"id":"evt_5090_nbsy52","timestamp":1791988959760}
+{"t":1791988959761,"kind":"agent:spawned","id":"agent-coder-36f12eda","role":"coder","taskId":"","timestamp":1791988959761}
+{"t":1791988959762,"kind":"task:started","agentId":"agent-coder-36f12eda","task":{"id":"36f12eda-b215-4ae0-abbd-6d66f6d57f5a","title":"u need to find real holy shits","description":"u need to find real holy shits","role":"coder","status":"running","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"createdAt":1791988959759,"startedAt":1791988959760},"id":"evt_5092_bqne0c","timestamp":1791988959762}
+{"t":1791988959765,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mch110] lean tier: deferred 43 tools for implement task (load_tools restores them)","id":"evt_5093_t1l281","timestamp":1791988959765}
+{"t":1791988959766,"kind":"tool:called","agentId":"agent-coder-36f12eda","tool":"shell","args":{"command":"git status --short","timeout":60},"id":"evt_5094_jgsyzj","timestamp":1791988959766}
+{"t":1791988959772,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server 'sqlite' error: mcp:sqlite spawn failed: Executable not found in $PATH: \"uvx\"","id":"evt_5095_k3mxud","timestamp":1791988959772}
+{"t":1791988959813,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server 'lazy-chameleon' error: mcp:lazy-chameleon server exited (code=2 signal=none) before responding","id":"evt_5096_1fzy3x","timestamp":1791988959813}
+{"t":1791988961427,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server 'testserver' error: mcp:testserver server exited (code=1 signal=none) before responding","id":"evt_5097_057m4c","timestamp":1791988961427}
+{"t":1791988961428,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"MCP server 'sqlite' failed: mcp:sqlite spawn failed: Executable not found in $PATH: \"uvx\"","id":"evt_5098_g9t8js","timestamp":1791988961428}
+{"t":1791988961428,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"MCP server 'lazy-chameleon' failed: mcp:lazy-chameleon server exited (code=2 signal=none) before responding","id":"evt_5099_yviuxk","timestamp":1791988961428}
+{"t":1791988961428,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"MCP server 'testserver' failed: mcp:testserver server exited (code=1 signal=none) before responding","id":"evt_5100_9gbt81","timestamp":1791988961428}
+{"t":1791988961428,"kind":"tool:called","agentId":"agent-coder-36f12eda","tool":"shell","args":{"command":"git status --porcelain","timeout":15},"id":"evt_5101_roblfa","timestamp":1791988961428}
+{"t":1791988961438,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server sqlite unavailable, skipping: Executable not found in $PATH: \"uvx\"","id":"evt_5102_o00m39","timestamp":1791988961438}
+{"t":1791988961480,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server lazy-chameleon unavailable, skipping: mcp lazy-chameleon: server exited (code 2)","id":"evt_5103_ba4caj","timestamp":1791988961480}
+{"t":1791988962878,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[mcp] server testserver unavailable, skipping: mcp testserver: server exited (code 1)","id":"evt_5104_m09cfs","timestamp":1791988962878}
+{"t":1791988962879,"kind":"pulse","state":{"completedTasks":[],"importantDecisions":[],"filesModified":[],"knownErrors":[],"constraints":[],"goal":"u need to find real holy shits","nextAction":"Start task: u need to find real holy shits"},"id":"evt_5105_2iifxs","timestamp":1791988962879}
+{"t":1791988963866,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"The","id":"evt_5106_lxujtd","timestamp":1791988963866}
+{"t":1791988963891,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" user wants me to keep","id":"evt_5107_weuwx4","timestamp":1791988963891}
+{"t":1791988963991,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" hunting","id":"evt_5108_mk20pi","timestamp":1791988963991}
+{"t":1791988964028,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" for \"real holy shits","id":"evt_5109_11kqps","timestamp":1791988964028}
+{"t":1791988964052,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"\" on https://platform.ex","id":"evt_5110_y54y0y","timestamp":1791988964052}
+{"t":1791988964081,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"perientiallabs.ai/.","id":"evt_5111_tkv1tb","timestamp":1791988964081}
+{"t":1791988964116,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" Previous session found","id":"evt_5112_p3v362","timestamp":1791988964116}
+{"t":1791988964145,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" the /","id":"evt_5113_ii9wfn","timestamp":1791988964145}
+{"t":1791988964173,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"api/models catalog with","id":"evt_5114_0h02s2","timestamp":1791988964172}
+{"t":1791988964206,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" free models","id":"evt_5115_wv8tw7","timestamp":1791988964206}
+{"t":1791988964244,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":". Now they want deeper","id":"evt_5116_imvh5o","timestamp":1791988964244}
+{"t":1791988964278,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" findings","id":"evt_5117_5cx8np","timestamp":1791988964278}
+{"t":1791988964302,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" — real holysh","id":"evt_5118_u0b136","timestamp":1791988964302}
+{"t":1791988964662,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"its. This","id":"evt_5119_ywslt9","timestamp":1791988964662}
+{"t":1791988964668,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" is authorized","id":"evt_5120_iy3eju","timestamp":1791988964668}
+{"t":1791988964730,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" security testing on","id":"evt_5121_wgxdtn","timestamp":1791988964730}
+{"t":1791988964730,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" their own website (they","id":"evt_5122_zhdnvf","timestamp":1791988964730}
+{"t":1791988964760,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" said","id":"evt_5123_8mp8u5","timestamp":1791988964760}
+{"t":1791988964789,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" \"my website","id":"evt_5124_afh4i4","timestamp":1791988964789}
+{"t":1791988964823,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"\"). Let","id":"evt_5125_xksno6","timestamp":1791988964823}
+{"t":1791988964843,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" me do a deeper recon","id":"evt_5126_7809ut","timestamp":1791988964843}
+{"t":1791988965371,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":": enumerate more endpoints, check","id":"evt_5127_1ak8y3","timestamp":1791988965371}
+{"t":1791988965755,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" for","id":"evt_5128_ssbbyj","timestamp":1791988965755}
+{"t":1791988966083,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" exposed","id":"evt_5129_8zqw9p","timestamp":1791988966083}
+{"t":1791988966084,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" secrets","id":"evt_5130_7ex2y2","timestamp":1791988966084}
+{"t":1791988966105,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", headers","id":"evt_5131_uhm7he","timestamp":1791988966105}
+{"t":1791988966150,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", API","id":"evt_5132_yz5e5e","timestamp":1791988966150}
+{"t":1791988966203,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" docs","id":"evt_5133_qdspcu","timestamp":1791988966203}
+{"t":1791988966233,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", sub","id":"evt_5134_lgq9bz","timestamp":1791988966233}
+{"t":1791988966264,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"domains, etc.\n\nLet me","id":"evt_5135_sltke1","timestamp":1791988966264}
+{"t":1791988966293,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" plan","id":"evt_5136_9hkdn5","timestamp":1791988966293}
+{"t":1791988966316,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":": deeper","id":"evt_5137_l2ueiq","timestamp":1791988966316}
+{"t":1791988966351,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" endpoint","id":"evt_5138_eyj70e","timestamp":1791988966351}
+{"t":1791988966374,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" enumeration","id":"evt_5139_f2dciu","timestamp":1791988966374}
+{"t":1791988966410,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", auth","id":"evt_5140_pg1hvd","timestamp":1791988966410}
+{"t":1791988966433,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" boundary","id":"evt_5141_wytknb","timestamp":1791988966433}
+{"t":1791988966468,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" testing","id":"evt_5142_mgrym4","timestamp":1791988966468}
+{"t":1791988966495,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", header","id":"evt_5143_0srq5o","timestamp":1791988966495}
+{"t":1791988966523,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" analysis","id":"evt_5144_catwgr","timestamp":1791988966523}
+{"t":1791988966552,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", JS bundle","id":"evt_5145_v1woxy","timestamp":1791988966552}
+{"t":1791988966579,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" analysis for","id":"evt_5146_gc345b","timestamp":1791988966579}
+{"t":1791988966607,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" leaked","id":"evt_5147_wgwn5e","timestamp":1791988966607}
+{"t":1791988966636,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" keys","id":"evt_5148_2ftqlz","timestamp":1791988966636}
+{"t":1791988966666,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"/end","id":"evt_5149_rvcuws","timestamp":1791988966666}
+{"t":1791988966692,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"points, other","id":"evt_5150_wqx5ud","timestamp":1791988966692}
+{"t":1791988966722,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" paths","id":"evt_5151_rlfrgk","timestamp":1791988966722}
+{"t":1791988966748,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" like","id":"evt_5152_xzq73a","timestamp":1791988966748}
+{"t":1791988966776,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" /docs","id":"evt_5153_sob80u","timestamp":1791988966776}
+{"t":1791988966804,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", /open","id":"evt_5154_uli7rw","timestamp":1791988966804}
+{"t":1791988966846,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"api.json","id":"evt_5155_chmg6z","timestamp":1791988966846}
+{"t":1791988966869,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", /.","id":"evt_5156_m9eh5s","timestamp":1791988966869}
+{"t":1791988966888,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"env","id":"evt_5157_6pavxu","timestamp":1791988966888}
+{"t":1791988966924,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", etc.","id":"evt_5158_xgcev0","timestamp":1791988966924}
+{"t":1791988966954,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" All","id":"evt_5159_jgvakg","timestamp":1791988966954}
+{"t":1791988967203,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" passive","id":"evt_5160_stixta","timestamp":1791988967203}
+{"t":1791988967591,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"/light","id":"evt_5161_pavj04","timestamp":1791988967591}
+{"t":1791988967596,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" — no","id":"evt_5162_r47jwj","timestamp":1791988967596}
+{"t":1791988967607,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" destructive attacks","id":"evt_5163_swx089","timestamp":1791988967607}
+{"t":1791988967639,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":". This is their own site","id":"evt_5164_shrrd4","timestamp":1791988967639}
+{"t":1791988967671,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", so it's fine.","id":"evt_5165_4tiw7v","timestamp":1791988967671}
+{"t":1791988967701,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"\n\nLet me start with a batch","id":"evt_5166_5zgrol","timestamp":1791988967701}
+{"t":1791988967731,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" of probes","id":"evt_5167_vmzgdc","timestamp":1791988967731}
+{"t":1791988968081,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":".","id":"evt_5168_zysvgt","timestamp":1791988968081}
+{"t":1791988968081,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"Res","id":"evt_5169_owvsyf","timestamp":1791988968081}
+{"t":1791988968108,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"uming the","id":"evt_5170_cllqh9","timestamp":1791988968108}
+{"t":1791988968137,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" hunt with a deeper","id":"evt_5171_g21c7m","timestamp":1791988968137}
+{"t":1791988968168,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" pass.","id":"evt_5172_aswn1x","timestamp":1791988968168}
+{"t":1791988968199,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" Last","id":"evt_5173_316wur","timestamp":1791988968199}
+{"t":1791988968231,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" session","id":"evt_5174_x9tcc1","timestamp":1791988968231}
+{"t":1791988968259,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" mapped","id":"evt_5175_mnmspb","timestamp":1791988968259}
+{"t":1791988968291,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" the public","id":"evt_5176_xujcbe","timestamp":1791988968291}
+{"t":1791988968322,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" API","id":"evt_5177_3azzan","timestamp":1791988968322}
+{"t":1791988968353,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" surface;","id":"evt_5178_fhjhem","timestamp":1791988968353}
+{"t":1791988968379,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" this time","id":"evt_5179_302vs9","timestamp":1791988968379}
+{"t":1791988968457,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" I'll go after","id":"evt_5180_i6cr5v","timestamp":1791988968457}
+{"t":1791988968489,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" the stuff","id":"evt_5181_fmjb1t","timestamp":1791988968489}
+{"t":1791988968523,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" that only","id":"evt_5182_jvsc5c","timestamp":1791988968523}
+{"t":1791988968559,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" shows","id":"evt_5183_zvcn9z","timestamp":1791988968559}
+{"t":1791988968641,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" up under","id":"evt_5184_5d95ny","timestamp":1791988968641}
+{"t":1791988968688,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" deeper","id":"evt_5185_h9aarg","timestamp":1791988968688}
+{"t":1791988968728,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" enumeration","id":"evt_5186_f9hicb","timestamp":1791988968728}
+{"t":1791988968729,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":": JS","id":"evt_5187_ztn70m","timestamp":1791988968729}
+{"t":1791988968758,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" bundles (","id":"evt_5188_uh6z6i","timestamp":1791988968758}
+{"t":1791988968784,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"leaked keys/","id":"evt_5189_ixm7x4","timestamp":1791988968784}
+{"t":1791988968812,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"hidden endpoints), Open","id":"evt_5190_kpjcp3","timestamp":1791988968812}
+{"t":1791988968841,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"API/docs","id":"evt_5191_2ss6lo","timestamp":1791988968841}
+{"t":1791988968874,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" artifacts","id":"evt_5192_4dn5d5","timestamp":1791988968874}
+{"t":1791988968896,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":", common","id":"evt_5193_ch1vkm","timestamp":1791988968896}
+{"t":1791988968925,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" sensitive","id":"evt_5194_eeudij","timestamp":1791988968925}
+{"t":1791988968959,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" paths","id":"evt_5195_y9mzsf","timestamp":1791988968959}
+{"t":1791988968983,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":", header","id":"evt_5196_2ilvcs","timestamp":1791988968983}
+{"t":1791988969009,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"/tech","id":"evt_5197_kxkr9j","timestamp":1791988969009}
+{"t":1791988969211,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" fingerprinting, and auth","id":"evt_5198_2br7rq","timestamp":1791988969211}
+{"t":1791988969454,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"-bound","id":"evt_5199_qk9rw0","timestamp":1791988969454}
+{"t":1791988969457,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"ary edge","id":"evt_5200_gs9lks","timestamp":1791988969457}
+{"t":1791988969483,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" cases. All","id":"evt_5201_djjyjk","timestamp":1791988969483}
+{"t":1791988969513,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" against","id":"evt_5202_dkuc9k","timestamp":1791988969513}
+{"t":1791988969543,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" your own platform","id":"evt_5203_e1d5lc","timestamp":1791988969543}
+{"t":1791988969567,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":", all","id":"evt_5204_oh0cgp","timestamp":1791988969567}
+{"t":1791988969594,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" read-only probes","id":"evt_5205_qe5vcz","timestamp":1791988969594}
+{"t":1791988969620,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":".","id":"evt_5206_pffuof","timestamp":1791988969620}
+{"t":1791988971598,"kind":"usage:updated","agentId":"agent-coder-36f12eda","inputTokens":5419,"outputTokens":304,"cacheTokens":4608,"totalTokens":10331,"costUsd":0,"id":"evt_5207_mf6m95","timestamp":1791988971598}
+{"t":1791988971600,"kind":"tool:completed","agentId":"agent-coder-36f12eda","tool":"todo","result":{"toolCallId":"chatcmpl-tool-815131364119e8d2","name":"todo","output":"Added: Deep recon: JS bundles, docs artifacts, sensitive paths\n1. [ ] Deep recon: JS bundles, docs artifacts, sensitive paths","durationMs":0},"id":"evt_5208_5dxax0","timestamp":1791988971599}
+{"t":1791988971600,"kind":"tool:completed","agentId":"agent-coder-36f12eda","tool":"todo","result":{"toolCallId":"chatcmpl-tool-83d2ab918fc6b3de","name":"todo","output":"Added: Auth boundary & edge-case probing on API\n1. [ ] Deep recon: JS bundles, docs artifacts, sensitive paths\n2. [ ] Auth boundary & edge-case probing on API","durationMs":0},"id":"evt_5209_vcgiln","timestamp":1791988971600}
+{"t":1791988971600,"kind":"tool:completed","agentId":"agent-coder-36f12eda","tool":"todo","result":{"toolCallId":"chatcmpl-tool-b5144b29fa61bd9e","name":"todo","output":"Added: Update FINDINGS.md with verified evidence\n1. [ ] Deep recon: JS bundles, docs artifacts, sensitive paths\n2. [ ] Auth boundary & edge-case probing on API\n3. [ ] Update FINDINGS.md with verified evidence","durationMs":0},"id":"evt_5210_yus22b","timestamp":1791988971600}
+{"t":1791988971601,"kind":"agent:iteration","agentId":"agent-coder-36f12eda","trace":{"iteration":0,"toolCalls":3,"streamBytes":362,"durationMs":10163.81,"phase":"tool-exec"},"id":"evt_5211_lfxfsl","timestamp":1791988971601}
+{"t":1791988971602,"kind":"pulse","state":{"completedTasks":[],"importantDecisions":[],"filesModified":[],"knownErrors":[],"constraints":[],"goal":"u need to find real holy shits","nextAction":"Start task: u need to find real holy shits"},"id":"evt_5212_861unh","timestamp":1791988971602}
+{"t":1791988972293,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"The","id":"evt_5213_u9w7rr","timestamp":1791988972293}
+{"t":1791988972325,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" user wants me to continue","id":"evt_5214_nhg27c","timestamp":1791988972325}
+{"t":1791988972356,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" the","id":"evt_5215_0re54r","timestamp":1791988972356}
+{"t":1791988972391,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" recon on their own website","id":"evt_5216_bokeo1","timestamp":1791988972391}
+{"t":1791988972428,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":".","id":"evt_5217_r642ds","timestamp":1791988972428}
+{"t":1791988972460,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" Let me actually","id":"evt_5218_qtnvi0","timestamp":1791988972460}
+{"t":1791988972490,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" run the probes","id":"evt_5219_8jzcjl","timestamp":1791988972490}
+{"t":1791988972525,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":".","id":"evt_5220_k9q47t","timestamp":1791988972525}
+{"t":1791988972551,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" Start","id":"evt_5221_5to1mo","timestamp":1791988972551}
+{"t":1791988972584,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" with fetching","id":"evt_5222_dy6t1u","timestamp":1791988972584}
+{"t":1791988972609,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" the site","id":"evt_5223_gphleu","timestamp":1791988972609}
+{"t":1791988972635,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", JS bundles, docs artifacts","id":"evt_5224_0oqiwg","timestamp":1791988972635}
+{"t":1791988972665,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":", sensitive paths.","id":"evt_5225_k2ls27","timestamp":1791988972665}
+{"t":1791988972666,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"Executing","id":"evt_5226_trmzyb","timestamp":1791988972666}
+{"t":1791988972693,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" the deep recon now","id":"evt_5227_behg9c","timestamp":1791988972693}
+{"t":1791988972720,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" — starting","id":"evt_5228_2573s9","timestamp":1791988972720}
+{"t":1791988972758,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" with the front","id":"evt_5229_is4rcr","timestamp":1791988972758}
+{"t":1791988972844,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"-end","id":"evt_5230_odve38","timestamp":1791988972844}
+{"t":1791988972845,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" surface","id":"evt_5231_df027d","timestamp":1791988972844}
+{"t":1791988972845,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" (","id":"evt_5232_2073zc","timestamp":1791988972845}
+{"t":1791988972864,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"HTML +","id":"evt_5233_lvrk7s","timestamp":1791988972864}
+{"t":1791988972882,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" JS bundles,","id":"evt_5234_squs15","timestamp":1791988972882}
+{"t":1791988972912,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" which","id":"evt_5235_h1nxud","timestamp":1791988972912}
+{"t":1791988972939,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" often leak hidden endpoints/","id":"evt_5236_y1s6k7","timestamp":1791988972939}
+{"t":1791988972962,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":"keys) and docs","id":"evt_5237_b9tpvw","timestamp":1791988972962}
+{"t":1791988972989,"kind":"message:chunk","agentId":"agent-coder-36f12eda","content":" artifacts in parallel.","id":"evt_5238_cw1zyg","timestamp":1791988972989}
+{"t":1791988974555,"kind":"usage:updated","agentId":"agent-coder-36f12eda","inputTokens":3439,"outputTokens":274,"cacheTokens":6912,"totalTokens":10625,"costUsd":0,"id":"evt_5239_dv4aym","timestamp":1791988974555}
+{"t":1791988974556,"kind":"tool:called","agentId":"agent-coder-36f12eda","tool":"shell","args":{"command":"mkdir -p /home/jewboy420/holyshit-mode/recon/bundles && cd /home/jewboy420/holyshit-mode/recon/bundles && curl -sL -o index.html -w \"HTTP %{http_code} | %{size_download} bytes | %{url_effective}\\n\" https://platform.experientiallabs.ai/ && echo \"---HEAD---\" && curl -sI https://platform.experientiallabs.ai/ | head -30","description":"Fetch homepage HTML and response headers","prompt":"Fetch homepage HTML and response headers"},"tool_call_id":"chatcmpl-tool-a2f859ded7e264c5","id":"evt_5240_2yb59n","timestamp":1791988974556}
+{"t":1791988974557,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[shell:network] mkdir -p /home/jewboy420/holyshit-mode/recon/bundles && cd /home/jewboy420/holyshit-mode/recon/bundles && curl -sL -o index.html -w \"HTTP %{http_code} | %{size_","id":"evt_5241_3zu6iw","timestamp":1791988974557}
+{"t":1791988976808,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[shell:network] mkdir -p /home/jewboy420/holyshit-mode/recon/bundles && cd /home/jewboy420/holyshit-mode/recon/bundles && curl -sL -o index.html -w \"HTTP %{http_code} | %{size_ (2251ms)","id":"evt_5242_vxstf4","timestamp":1791988976808}
+{"t":1791988976810,"kind":"tool:completed","agentId":"agent-coder-36f12eda","tool":"shell","result":{"toolCallId":"chatcmpl-tool-a2f859ded7e264c5","name":"shell","output":"exit_code: 0\nstdout:\nHTTP 200 | 3350929 bytes | https://platform.experientiallabs.ai/models\n---HEAD---\nHTTP/2 307 \r\ndate: Wed, 14 Oct 2026 14:42:56 GMT\r\ncontent-type: text/html; charset=utf-8\r\nlink: </.well-known/api-catalog>; rel=\"api-catalog\", </docs>; rel=\"service-doc\", </llms.txt>; rel=\"service-meta\"; type=\"text/plain\"\r\nlink: </_next/static/media/797e433ab948586e-s.p.0r6juujl39pe6.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/media/caa3a2e1cccd8315-s.p.0wgildi0cnwt9.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\"\r\nvary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding\r\nlocation: /models\r\nx-powered-by: Next.js\r\ncache-control: private, no-cache, no-store, max-age=0, must-revalidate\r\nstrict-transport-security: max-age=31536000; includeSubDomains\r\ncf-cache-status: DYNAMIC\r\nserver: cloudflare\r\ncf-ray: a4a75a7f3d83215a-IAD\r\nalt-svc: h3=\":443\"; ma=86400\r\n\r\n\nstderr:\n(empty)","durationMs":2252},"id":"evt_5243_55ng3s","timestamp":1791988976809}
+{"t":1791988976811,"kind":"tool:called","agentId":"agent-coder-36f12eda","tool":"shell","args":{"command":"for p in robots.txt sitemap.xml .well-known/security.txt openapi.json swagger.json api-docs docs .env .git/config; do code=$(curl -s -o /dev/null -w \"%{http_code}\" \"https://platform.experientiallabs.ai/$p\"); echo \"$code  /$p\"; done","description":"Probe common docs/artifact paths","prompt":"Probe common docs/artifact paths"},"tool_call_id":"chatcmpl-tool-8b0f4740659ce946","id":"evt_5244_vrbo1y","timestamp":1791988976811}
+{"t":1791988976811,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[shell:network] for p in robots.txt sitemap.xml .well-known/security.txt openapi.json swagger.json api-docs docs .env .git/config; do code=$(curl -s -o /dev/null -w \"%{http_cod","id":"evt_5245_b785of","timestamp":1791988976811}
+{"t":1791988979293,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[shell:network] for p in robots.txt sitemap.xml .well-known/security.txt openapi.json swagger.json api-docs docs .env .git/config; do code=$(curl -s -o /dev/null -w \"%{http_cod (2482ms)","id":"evt_5246_kbxmmh","timestamp":1791988979293}
+{"t":1791988979295,"kind":"tool:completed","agentId":"agent-coder-36f12eda","tool":"shell","result":{"toolCallId":"chatcmpl-tool-8b0f4740659ce946","name":"shell","output":"exit_code: 0\nstdout:\n200  /robots.txt\n200  /sitemap.xml\n200  /.well-known/security.txt\n307  /openapi.json\n307  /swagger.json\n307  /api-docs\n200  /docs\n307  /.env\n307  /.git/config\n\nstderr:\n(empty)","durationMs":2482},"id":"evt_5247_5l8qvm","timestamp":1791988979294}
+{"t":1791988979295,"kind":"agent:iteration","agentId":"agent-coder-36f12eda","trace":{"iteration":1,"toolCalls":2,"streamBytes":158,"durationMs":7694.25,"phase":"tool-exec"},"id":"evt_5248_52ub0r","timestamp":1791988979295}
+{"t":1791988979296,"kind":"pulse","state":{"completedTasks":[],"importantDecisions":[],"filesModified":[],"knownErrors":[],"constraints":[],"goal":"u need to find real holy shits","nextAction":"Start task: u need to find real holy shits"},"id":"evt_5249_n7xm20","timestamp":1791988979296}
+{"t":1791988980994,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":"Continue","id":"evt_5250_x9velu","timestamp":1791988980994}
+{"t":1791988981018,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":" recon","id":"evt_5251_2mejba","timestamp":1791988981018}
+{"t":1791988981041,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":". The homepage is a Next","id":"evt_5252_x49muv","timestamp":1791988981041}
+{"t":1791988981154,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":".js app (3","id":"evt_5253_gkyv1l","timestamp":1791988981154}
+{"t":1791988981175,"kind":"agent:reasoning","agentId":"agent-coder-36f12eda","content":".3MB HTML","id":"evt_5254_82wqgm","timestamp":1791988981175}
+{"t":1791988981198,"kind":"agent:log","agentId":"agent-coder-36f12eda","message":"[model-call-error] The operation was aborted.","id":"evt_5255_lcznof","timestamp":1791988981198}
+{"t":1791988985581,"kind":"message","agentId":"agent-coder-36f12eda","role":"system","content":"Compacted (error); checkpoint retained.","id":"evt_5256_iqkip4","timestamp":1791988985580}
+{"t":1791988985584,"kind":"agent:iteration","agentId":"agent-coder-36f12eda","trace":{"iteration":2,"stopReason":"aborted","toolCalls":0,"streamBytes":0,"durationMs":6288.42,"phase":"finish"},"id":"evt_5257_rzq143","timestamp":1791988985584}
+{"t":1791988985584,"kind":"agent:completed","id":"agent-coder-36f12eda","taskId":"36f12eda-b215-4ae0-abbd-6d66f6d57f5a","timestamp":1791988985584}
+{"t":1791988985584,"kind":"summary:rendered","agentId":"agent-coder-36f12eda","success":false,"stopReason":"aborted","taskKind":"implement","durationMs":25822,"toolCallsTotal":2,"tokensUsed":20956,"filesModified":[],"summary":"Run aborted by caller. Resume anytime with \"mochi resume\".","doc":{"status":"partial","overview":"No substantive activity recorded.","metrics":[{"label":"TOOLS","value":"2 calls"},{"label":"DURATION","value":"25.8s"}],"whatChanged":[],"verification":[],"failures":[],"warnings":[],"references":[{"text":"todo: Added: Deep recon: JS bundles, docs artifacts, sensitive paths","priority":"P2"},{"text":"shell: exit_code: 0","priority":"P2"}],"next":[],"populatedSections":["overview","metrics","references"],"files":[],"turnKind":"task"},"id":"evt_5259_go96u6","timestamp":1791988985584}
+{"t":1791988985592,"kind":"task:failed","agentId":"agent-coder-36f12eda","task":{"id":"36f12eda-b215-4ae0-abbd-6d66f6d57f5a","title":"u need to find real holy shits","description":"u need to find real holy shits","role":"coder","status":"failed","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"output":"Run aborted by caller. Resume anytime with \"mochi resume\".","createdAt":1791988959759,"startedAt":1791988959760},"reason":"Run aborted by caller. Resume anytime with \"mochi resume\".","id":"evt_5260_70to6q","timestamp":1791988985592}
+{"t":1791988985593,"kind":"goal:summary","status":"failed","tokensUsed":20956,"costUsd":0,"durationMs":25822}

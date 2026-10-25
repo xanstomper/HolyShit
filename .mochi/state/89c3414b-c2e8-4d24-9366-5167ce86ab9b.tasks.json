@@ -1,0 +1,17 @@
+[
+  {
+    "id": "f196b527-01a3-437f-9841-2648ce98314f",
+    "title": "hi",
+    "description": "hi",
+    "role": "coder",
+    "status": "done",
+    "priority": 1,
+    "dependencies": [],
+    "acceptanceCriteria": [],
+    "attempts": [],
+    "output": "Hey! 👋 What are we working on today?\n\nI'm ready to dive into **holyshit-mode** — whether that's fixing a bug, adding a feature, refactoring, or tracking something down. Just point me at the problem.",
+    "createdAt": 1791991026091,
+    "startedAt": 1791991026092,
+    "completedAt": 1791991034414
+  }
+]

@@ -1,0 +1,41 @@
+{"t":1791991026092,"kind":"task:started","agentId":"","task":{"id":"f196b527-01a3-437f-9841-2648ce98314f","title":"hi","description":"hi","role":"coder","status":"running","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"createdAt":1791991026091,"startedAt":1791991026092},"id":"evt_2_cjc6qt","timestamp":1791991026092}
+{"t":1791991026093,"kind":"agent:spawned","id":"agent-coder-f196b527","role":"coder","taskId":"","timestamp":1791991026093}
+{"t":1791991026094,"kind":"task:started","agentId":"agent-coder-f196b527","task":{"id":"f196b527-01a3-437f-9841-2648ce98314f","title":"hi","description":"hi","role":"coder","status":"running","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"createdAt":1791991026091,"startedAt":1791991026092},"id":"evt_4_pmt8ui","timestamp":1791991026094}
+{"t":1791991026097,"kind":"agent:log","agentId":"agent-coder-f196b527","message":"[mch111] chat tier: advertised 7 tools, deferred 57 (load_tools restores them)","id":"evt_5_ds302l","timestamp":1791991026097}
+{"t":1791991026098,"kind":"tool:called","agentId":"agent-coder-f196b527","tool":"shell","args":{"command":"git status --porcelain","timeout":15},"id":"evt_6_fnyegw","timestamp":1791991026097}
+{"t":1791991026105,"kind":"pulse","state":{"completedTasks":[],"importantDecisions":[],"filesModified":[],"knownErrors":[],"constraints":[],"goal":"hi","nextAction":"Start task: hi"},"id":"evt_7_nn68gs","timestamp":1791991026105}
+{"t":1791991028423,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":"The","id":"evt_8_tioc5x","timestamp":1791991028423}
+{"t":1791991028451,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" user just said \"hi\".","id":"evt_9_riakde","timestamp":1791991028451}
+{"t":1791991028483,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" This is a simple greeting.","id":"evt_10_c51pag","timestamp":1791991028483}
+{"t":1791991028514,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" I should respond conc","id":"evt_11_q0490v","timestamp":1791991028514}
+{"t":1791991028545,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":"isely and friendly, maybe","id":"evt_12_oohfxi","timestamp":1791991028545}
+{"t":1791991028579,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" briefly note","id":"evt_13_l0awnp","timestamp":1791991028579}
+{"t":1791991028609,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" what I can","id":"evt_14_fm9a87","timestamp":1791991028609}
+{"t":1791991028642,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" help with. No tools needed","id":"evt_15_3ws0dm","timestamp":1791991028642}
+{"t":1791991028673,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":". Keep","id":"evt_16_f20qsz","timestamp":1791991028673}
+{"t":1791991028704,"kind":"agent:reasoning","agentId":"agent-coder-f196b527","content":" it short.","id":"evt_17_auwcdy","timestamp":1791991028704}
+{"t":1791991028737,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"Hey","id":"evt_18_cpeyrt","timestamp":1791991028737}
+{"t":1791991028769,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"! 👋 What","id":"evt_19_1uelsu","timestamp":1791991028769}
+{"t":1791991028799,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" are","id":"evt_20_1kx8r6","timestamp":1791991028799}
+{"t":1791991028831,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" we working on today?\n\nI","id":"evt_21_h65p5i","timestamp":1791991028831}
+{"t":1791991028877,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"'m ready","id":"evt_22_mjpett","timestamp":1791991028877}
+{"t":1791991028895,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" to dive","id":"evt_23_1hf5oa","timestamp":1791991028895}
+{"t":1791991028923,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" into **","id":"evt_24_5fz4h7","timestamp":1791991028923}
+{"t":1791991028961,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"hol","id":"evt_25_x8y2ms","timestamp":1791991028961}
+{"t":1791991028979,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"yshit","id":"evt_26_pwytak","timestamp":1791991028979}
+{"t":1791991029006,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"-mode** — whether","id":"evt_27_nvh0ut","timestamp":1791991029006}
+{"t":1791991029034,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" that","id":"evt_28_pc5cml","timestamp":1791991029034}
+{"t":1791991029063,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"'s fixing a","id":"evt_29_v0n7bj","timestamp":1791991029063}
+{"t":1791991029089,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" bug, adding","id":"evt_30_jtiaxj","timestamp":1791991029089}
+{"t":1791991029118,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" a feature, ref","id":"evt_31_kv7mu0","timestamp":1791991029118}
+{"t":1791991029145,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":"actoring, or tracking","id":"evt_32_exp3d3","timestamp":1791991029145}
+{"t":1791991029171,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" something","id":"evt_33_m4jv0c","timestamp":1791991029171}
+{"t":1791991029197,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" down. Just point","id":"evt_34_6a7leg","timestamp":1791991029197}
+{"t":1791991029225,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":" me at the problem","id":"evt_35_7ig5a8","timestamp":1791991029225}
+{"t":1791991029257,"kind":"message:chunk","agentId":"agent-coder-f196b527","content":".","id":"evt_36_rh2jee","timestamp":1791991029257}
+{"t":1791991029286,"kind":"usage:updated","agentId":"agent-coder-f196b527","inputTokens":3695,"outputTokens":92,"cacheTokens":0,"totalTokens":3787,"costUsd":0,"id":"evt_37_8cxuy7","timestamp":1791991029286}
+{"t":1791991029287,"kind":"agent:iteration","agentId":"agent-coder-f196b527","trace":{"iteration":0,"stopReason":"completed","toolCalls":0,"streamBytes":199,"durationMs":3181.84,"phase":"finish"},"id":"evt_38_trwxc9","timestamp":1791991029287}
+{"t":1791991029287,"kind":"agent:completed","id":"agent-coder-f196b527","taskId":"f196b527-01a3-437f-9841-2648ce98314f","timestamp":1791991029287}
+{"t":1791991034385,"kind":"summary:rendered","agentId":"agent-coder-f196b527","success":true,"stopReason":"completed","taskKind":"chat","durationMs":3193,"toolCallsTotal":0,"tokensUsed":3787,"filesModified":[],"summary":"Hey! 👋 What are we working on today?\n\nI'm ready to dive into **holyshit-mode** — whether that's fixing a bug, adding a feature, refactoring, or tracking something down. Just point me at the problem.","doc":{"status":"complete","overview":"No substantive activity recorded.","metrics":[{"label":"DURATION","value":"3.2s"}],"whatChanged":[],"verification":[],"failures":[],"warnings":[],"references":[],"next":[],"populatedSections":["overview","metrics"],"files":[],"turnKind":"chat","narrative":"**Completed the \"hi\" task.**  \n**The run succeeded cleanly in 3.2s.**  \n**All checks passed with no failures.**  \n**No blockers or active issues remain.**"},"id":"evt_40_t87bkj","timestamp":1791991034385}
+{"t":1791991034414,"kind":"task:completed","agentId":"agent-coder-f196b527","task":{"id":"f196b527-01a3-437f-9841-2648ce98314f","title":"hi","description":"hi","role":"coder","status":"done","priority":1,"dependencies":[],"acceptanceCriteria":[],"attempts":[],"output":"Hey! 👋 What are we working on today?\n\nI'm ready to dive into **holyshit-mode** — whether that's fixing a bug, adding a feature, refactoring, or tracking something down. Just point me at the problem.","createdAt":1791991026091,"startedAt":1791991026092,"completedAt":1791991034414},"id":"evt_41_dlhj5m","timestamp":1791991034414}
+{"t":1791991034415,"kind":"goal:summary","status":"completed","tokensUsed":3787,"costUsd":0,"durationMs":3193}

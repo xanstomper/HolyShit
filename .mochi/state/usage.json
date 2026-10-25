@@ -1,0 +1,88 @@
+{
+  "entries": [
+    {
+      "model": "glm-5.3-flash",
+      "goal": "/holyshit-mode dont stop till u fount vectors, free ai, holyshits, secrets, escaltions, forges or more , my webstie   https://platform.experientiallabs.ai/  dont stop until u fount a holyshit",
+      "usage": {
+        "modelCalls": 21,
+        "tokensIn": 227832,
+        "tokensOut": 8391,
+        "tokensCached": 144896,
+        "contextUsed": 13088,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 169808
+      }
+    },
+    {
+      "model": "glm-5.3-flash",
+      "goal": "keep going till u find a holyshit",
+      "usage": {
+        "modelCalls": 17,
+        "tokensIn": 220017,
+        "tokensOut": 9059,
+        "tokensCached": 133632,
+        "contextUsed": 8906,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 188722
+      }
+    },
+    {
+      "model": "glm-5.3-flash",
+      "goal": "u need to find real holy shits",
+      "usage": {
+        "modelCalls": 3,
+        "tokensIn": 20378,
+        "tokensOut": 578,
+        "tokensCached": 11520,
+        "contextUsed": 10625,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 25822
+      }
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "goal": "u need to find comrpomising vectors, or real exploits, or vectors or real holy shits jwt forges or escaltions",
+      "usage": {
+        "modelCalls": 0,
+        "tokensIn": 0,
+        "tokensOut": 0,
+        "tokensCached": 0,
+        "contextUsed": 0,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 0
+      }
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "goal": "hi",
+      "usage": {
+        "modelCalls": 0,
+        "tokensIn": 0,
+        "tokensOut": 0,
+        "tokensCached": 0,
+        "contextUsed": 0,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 0
+      }
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "goal": "hi",
+      "usage": {
+        "modelCalls": 1,
+        "tokensIn": 3695,
+        "tokensOut": 92,
+        "tokensCached": 0,
+        "contextUsed": 3787,
+        "costUsd": 0,
+        "toolCalls": 0,
+        "durationMs": 3193
+      }
+    }
+  ]
+}

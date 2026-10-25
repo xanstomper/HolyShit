@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Deep recon: JS bundles, docs artifacts, sensitive paths",
+    "status": "pending",
+    "order": 1
+  },
+  {
+    "title": "Auth boundary & edge-case probing on API",
+    "status": "pending",
+    "order": 2
+  },
+  {
+    "title": "Update FINDINGS.md with verified evidence",
+    "status": "pending",
+    "order": 3
+  }
+]

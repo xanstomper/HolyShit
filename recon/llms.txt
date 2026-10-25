@@ -1,0 +1,2348 @@
+# Experiential Labs: machine-readable reference
+
+Experiential Labs is an OpenAI-compatible model gateway: one base URL in front
+of every model, spanning hosted providers, your own provider keys (bring-your-own-key),
+our platform-funded credits, and self-hosted or custom models, plus a public
+model catalog, per-model provider waterfalls, organization API Keys, and usage
+and credits. Use OpenAI clients for chat-capable models. Native decision models
+such as TypeSafe Jev use their own API surface, documented below.
+This file is the complete agent-facing reference. Human docs: https://platform.experientiallabs.ai/docs.
+OpenAI-shared semantics: https://platform.openai.com/docs/api-reference
+
+## Base URLs (local vs platform)
+
+This deployment:
+  API base URL: https://api.experientiallabs.ai
+  Web app:      https://platform.experientiallabs.ai
+This is the hosted platform. A self-hosted or local stack serves at its own
+URL and its own copy of this file documents it.
+OpenAI clients use base_url = "https://api.experientiallabs.ai/v1". The management API is under https://api.experientiallabs.ai/api.
+The /v1 base is canonical; the edge also accepts the un-prefixed paths a GUI
+tool produces when it appends /models, /chat/completions, /responses,
+/embeddings, /messages, /batches, or /files to a bare host (each aliases to its /v1 twin;
+no other un-prefixed path is served).
+
+## Authentication
+
+- One header, always: Authorization: Bearer <key>. No X-Api-Key, no query param.
+- Keys look like xpl_ + 40 lowercase hex chars and are scoped to ONE
+  organization. The secret is shown once, at creation.
+- Mint a key by signing in to https://platform.experientiallabs.ai/settings/api-keys; the plaintext appears
+  exactly once. Key creation and revocation are web-session actions, not API-key
+  actions.
+- One key reaches BOTH the inference surface (/v1/*) and the management API an
+  agent needs: catalog reads, custom-model and waterfall writes, BYOK provider
+  connections, usage reads, and the org's key list. It CANNOT mint or revoke
+  keys, change another key's limits, or reach platform-admin routes.
+- Bad or missing key: 401 with {"error":{"code":"invalid_key",
+  "type":"authentication_error"}}. The 401 does not distinguish absent,
+  malformed, revoked, or expired.
+- Verify a key works: GET https://api.experientiallabs.ai/v1/models with the key -> 200 and the org's
+  callable models.
+
+## Two lanes (how a call is paid for)
+
+- pass_through: your own provider key (BYOK). No markup: the provider bills you
+  directly. Connect keys at https://platform.experientiallabs.ai/settings.
+- platform_funded: our credits. Public-catalog models are priced from the launch
+  catalog; each call draws down your credit balance. No markup.
+Which lane a model uses is decided by its provider waterfall. Either way, the
+gateway adds zero markup.
+- Free tiers: some platform-funded models carry a promotional free daily tier
+  (today gpt-6-astra and claude-fable-5.1). Eligibility: the org has a saved
+  card AND one settled $1+ charge (adding a card alone is not a charge). Each
+  tier has per-org daily and hourly token allowances (Astra: 500k input /
+  100k output per UTC day and 200k / 40k per hour; Fable 5.1: 375k / 75k per
+  day and 100k / 30k per hour); cached input tokens do not count. Past the
+  allowance the request answers 429 insufficient_quota with a "free limit"
+  message and does NOT spend credits -- unless the org opts into credits
+  overflow, which bills the overage to credits at list price instead. That
+  switch is ORG-WIDE (every free model). It is off for an org that has never
+  paid and turns ON automatically at the first real payment (a Pro
+  subscription, a credit top-up, or an auto-recharge). It can only be turned
+  on by hand once the org has a card on file AND the settled $1 verification
+  (the same bar the free tiers' card gate reads; a purchase or Pro satisfies
+  it): an org admin flips it on any free model's page ("Past the free limit"
+  -> Use credits), or an agent can
+  POST https://platform.experientiallabs.ai/api/credits-overflow with Authorization: Bearer xpl_... (the web
+  host, not the API host; idempotent). Without that, both answer 402
+  verification_required ("add a card and complete the $1 verification to
+  unlock credits overflow") and nothing changes -- so an unverified org's
+  remedy is to verify, not to enable overflow. It can be turned off again from
+  the same model-page row.
+- "service_tier": "flex" (OpenAI's flex tier) on a Chat Completions or
+  Responses request to gpt-5.6-sol is forwarded and billed at the flex rate
+  (50% of base), at cost; on a model without tier pricing it answers 400
+  unsupported_capability.
+
+## Credits and subscription rollover
+
+One credit is $0.01 of usage, not a fixed token count. Obtain credits through
+Pro allowances, one-off top-ups, optional auto-recharge, and eligible verification,
+onboarding, promotional or operator grants. Top-ups do not require a subscription.
+Free replenishment and model promotional allowances are separate benefits.
+
+Credits pay for platform-funded tokens at catalog rates, applicable platform-run
+web search fees (default $0.007 per search on a finished host-funded attempt).
+Ordinary Spend reports, filters and exports never spend credits.
+BYOK provider spend is billed directly by the provider. Promo-funded usage is not
+a wallet debit; a paid fallback or enabled credits overflow can draw credits.
+
+Consumption order: soonest-expiring credits first; among non-expiring credits,
+free grants/bonuses before purchased credits, then oldest grant first. Top-ups
+and subscription allowances are both purchased credits. Rollover does not reorder
+spending to prefer newer subscription credits over older protected funds.
+
+Prospective subscription rollover policy: applies only after activation to eligible
+grants from the effective date shown in the server-backed plan/checkout. Publishing
+these docs does not activate it. While disabled, paid renewal adds the full allowance
+without a rollover cap. Pre-activation subscription grants remain permanently
+outside the capped pool, including pre-activation paid invoices delivered late.
+Purchased top-up credits never expire and are excluded from subscription rollover
+limits. Free grants, bonuses and model promotional allowances are unaffected.
+The total wallet can exceed the subscription rollover ceiling.
+
+- Monthly paid renewal: min(unused eligible credits + new allowance, 2 x new
+  monthly allowance). A 2,000 allowance with 700 unused becomes 2,700; with
+  3,000 unused it becomes 4,000, before protected funds.
+- Annual: full annual allowance upfront. Same-or-higher annual renewal carries
+  up to 15% of the PREVIOUS ANNUAL ALLOWANCE (not 15% of unused credits), then
+  adds the full new annual allowance. At 24,000 old/new, 10,000 unused carries
+  3,600, totaling 27,600; 2,000 unused totals 26,000. A lower annual renewal
+  carries no governed annual credits.
+- Limits run at paid renewal, not calendar month-end, a failed payment or a
+  cancellation click. Cancellation retains the balance and stops future grants;
+  re-subscribing does not grandfather governed credits. A scheduled monthly
+  downgrade uses the new allowance at the next paid renewal, not when scheduled.
+- A full-price upgrade preserves the balance and adds the paid new allotment.
+  Rollover applies at the following natural renewal, not retroactively at upgrade.
+  At a scheduled monthly-to-annual boundary, carry at most the outgoing monthly
+  allowance plus the full annual grant. Annual-to-monthly has no governed annual
+  carryover at the annual boundary; an unexpired annual grant never gets a monthly cap.
+- A legitimately paid late older invoice is credited once but never caps newer
+  grants with its older ceiling; its eligible remainder joins the next renewal.
+  Payment restorations keep their original cohort and follow the same timing rule.
+  This is not a continuously enforced wallet ceiling. Refund/dispute reconciliation
+  accounts for prior rollover deductions, without double-removing the same credits;
+  already-spent refunded credits may still be recovered.
+Full explanation and examples: https://platform.experientiallabs.ai/docs/billing#subscription-rollover
+
+## Models
+
+- GET https://api.experientiallabs.ai/v1/models lists the model slugs your key can call: the public
+  catalog plus your organization's own custom and local models. Each id is a
+  slug, e.g. "claude-opus-5", "gpt-5.5", "gemini-3.7-flash".
+- A slug resolves through a provider waterfall: an ordered list of ways to reach
+  the model (provider + provider model id). The gateway tries each rung in order,
+  fails over on capacity and transport errors, and returns the first success.
+  Organizations may override the default chain.
+- Adding a provider key replaces the platform lane for that provider by
+  default: with no custom order, your key takes the platform rung's position
+  and the platform rung is not dialled. To use the key only as a fallback, put
+  it below the platform rung in the model's Waterfall.
+- A BYOK rung can carry per-key fallback rules: the failures the key is a
+  fallback for. Set from the fallback-rules icon below the first rung. A key
+  with rules never replaces the platform lane and is never dialled first, so it
+  reaches a route only through a Waterfall that places it below another rung;
+  a rule on a key no Waterfall places that way is refused (422) with that
+  instruction, and on a model with no such chain the key is inert. An active
+  restriction remains visible if the account moves first: reordering does not
+  clear its account-wide rule or make it eligible for a first dial. Every
+  failure is selected by default, so the key is a fallback wherever it sits;
+  deselect to a subset (e.g. cybersecurity-policy refusals only) and its rungs
+  are dialled only after a prior rung fails with one of those, never first. The
+  rule is stored per account and applies on every model whose Waterfall places
+  the key. An org can also connect several accounts for one provider, each
+  under its own name (setup_alias).
+- The full catalog with pricing, context window, and modalities is a public,
+  keyless read: GET https://api.experientiallabs.ai/api/models (no key returns the public rows; send your
+  key to also see your org's own custom and local models). One model:
+  GET https://api.experientiallabs.ai/api/models/<slug>; its deployments: .../providers. Note the split:
+  the /api/models* catalog reads are keyless, while GET https://api.experientiallabs.ai/v1/models (the
+  OpenAI-compatible list) requires your key.
+- Data retention is browsable: each /api/models entry carries "retention"
+  (zdr_all_rungs | zdr_enforceable | not_zdr | null when the model has no
+  platform-funded routed lane), computed over the lanes the gateway actually
+  routes for that model, and ?retention=zdr_all_rungs (or zdr_enforceable)
+  filters the list. The model detail stamps each provider row with its
+  "zero_data_retention" posture. GET /v1/models carries "data_policy" per
+  model ({zdr, zdr_on_request, no_training, providers:[{provider, zdr,
+  zdr_on_request, no_training}]}; zdr is true only when EVERY rung of the
+  model's routing pool is zero-data-retention by default; zdr_on_request is
+  true when at least one rung serves a require_zdr org, by default or under
+  the gateway's per-request zero-retention constraint).
+  GET https://api.experientiallabs.ai/api/v1/endpoints/zdr (public, no key needed) lists every rung a
+  require_zdr org is served through: model, provider, zdr, zdr_on_request
+  (published only while the deployed gateway can dispatch the constrained
+  route), no_training, routable, and the rung's declared capability
+  flags. Browsing is not enforcement: the org policy
+  require_zdr (a Pro feature; see "Zero data retention" below)
+  makes the gateway route only through zero-retention lanes.
+
+## Text embeddings
+
+- POST https://api.experientiallabs.ai/v1/embeddings is canonical; POST https://api.experientiallabs.ai/api/v1/embeddings and
+  POST https://api.experientiallabs.ai/embeddings relay to the same worker. Use Authorization: Bearer
+  with your inference-enabled xpl_ key, and Content-Type: application/json.
+- Check GET https://api.experientiallabs.ai/v1/models with your key for actual availability. Intended
+  launch models are direct OpenAI text-embedding-3-small, text-embedding-3-large,
+  and text-embedding-ada-002; a model must be activated and available to your key.
+  Read current input rates and model details from https://platform.experientiallabs.ai/models, not this file.
+- Minimal body: {"model":"text-embedding-3-small","input":"A short document."}
+  input accepts four forms: a nonempty string; a nonempty list of nonempty strings;
+  a nonempty array of nonnegative integer token IDs (one vector); or a nonempty
+  list of nonempty token-ID arrays (a batch). Empty strings or arrays, mixed text
+  and token-array batches, negative IDs, booleans, and floats are rejected.
+  Token IDs must match the chosen model's tokenizer. They are forwarded without
+  decoding or automatic conversion between tokenizers. Upstream models enforce
+  vocabulary and input limits; acceptance at the gateway does not guarantee
+  token-array support for every custom provider.
+- Optional dimensions is a positive integer supported by the model; omit it
+  for the model's default. text-embedding-3 models support reduced dimensions;
+  text-embedding-ada-002 does not. Input and batch limits are model-specific.
+- Optional encoding_format is "float" or "base64". Raw HTTP defaults to float.
+  The official OpenAI Python SDK requests base64 when encoding_format is omitted
+  and decodes the vectors into floats. Explicit base64 leaves encoded strings.
+- Optional user is a string of at most 1,024 characters, used for gateway-only
+  attribution and NOT forwarded upstream. Unknown parameters are rejected.
+  No streaming: omit stream or send stream:false for non-streaming compatibility
+  only. stream:true is unsupported; all other stream values are invalid. Chat
+  options, tools and prompt-cache controls do not apply.
+- Response: object="list", model, data[] with object="embedding", index (the
+  zero-based input position), embedding (floats or a base64 string), and usage.
+  usage.prompt_tokens == usage.total_tokens. Billing is input-token-only using
+  provider-reported usage; output tokens are zero internally. Vector length is
+  not an output-token charge. BYOK is billed directly by your provider.
+- NO embeddings response cache and NO Idempotency-Key replay. Repeated identical
+  requests, including retries with the same header, go upstream again and can
+  incur another charge. Completion prompt caching and internal router vector
+  reuse are not endpoint response caching. Store vectors in your own application
+  to avoid repeated work. A timeout may already represent billable provider work.
+- Python setup: python -m pip install openai; export EXPLABS_API_KEY="xpl_..."
+  with your actual key. Disable automatic retries if each attempt must be explicit:
+    import os
+    from openai import OpenAI
+    client = OpenAI(base_url="https://api.experientiallabs.ai/v1", api_key=os.environ["EXPLABS_API_KEY"], max_retries=0)
+    result = client.embeddings.create(model="text-embedding-3-small", input=["A short document."], dimensions=256)
+    print(result.data[0].embedding, result.usage.prompt_tokens)
+- Token IDs with tiktoken: python -m pip install openai tiktoken. Use the same
+  environment key. The flat array alternative input=token_batches[0] returns
+  one vector; the nested arrays below return a batch:
+    import os
+    import tiktoken
+    from openai import OpenAI
+    model = "text-embedding-3-small"
+    encoding = tiktoken.encoding_for_model(model)
+    token_batches = [encoding.encode(text) for text in ["A short document.", "A second document."]]
+    client = OpenAI(base_url="https://api.experientiallabs.ai/v1", api_key=os.environ["EXPLABS_API_KEY"], max_retries=0)
+    result = client.embeddings.create(model=model, input=token_batches)
+    print([(item.index, len(item.embedding)) for item in result.data])
+- LangChain setup: python -m pip install langchain-openai in your application.
+  Use standard OpenAIEmbeddings with default length checking and tiktoken enabled.
+  Its default path sends token-array batches for this OpenAI model; no custom
+  client or tokenizer workaround is needed:
+    import os
+    from langchain_openai import OpenAIEmbeddings
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", base_url="https://api.experientiallabs.ai/v1", api_key=os.environ["EXPLABS_API_KEY"], max_retries=0)
+    vectors = embeddings.embed_documents(["A short document.", "A second document."])
+    query_vector = embeddings.embed_query("What is semantic search?")
+    print(len(vectors), len(vectors[0]), len(query_vector))
+  LangChain may split long inputs and combine chunk vectors. Provider limits
+  still apply per request. This setup does not establish compatibility with
+  every custom provider or tokenizer.
+- Errors use the common OpenAI envelope. Fix 400 invalid_parameter or
+  unsupported_parameter using error.param; select an embedding-capable model
+  for unsupported_capability. Follow the returned message for key, access,
+  credit, rate, and provider failures; a retry has no deduplication guarantee.
+- Embeddings do NOT run identity content-guardrail classifiers. A policy on the
+  key's identity does not inspect, block, or redact embedding input or vectors.
+  Validate sensitive input in your application before sending it. Content
+  inspection is separate from storage and provider routing/retention policies:
+  https://platform.experientiallabs.ai/docs/data-controls
+- Guide and curl/SDK examples: https://platform.experientiallabs.ai/docs/embeddings
+  OpenAI reference: https://developers.openai.com/api/reference/resources/embeddings/methods/create
+  Tokenizer: https://github.com/openai/tiktoken
+  LangChain: https://reference.langchain.com/python/integrations/langchain_openai/OpenAIEmbeddings/
+
+## TypeSafe Jev: native decisions for applications and coding agents
+
+- Jev is a typed decision helper, NOT the primary chat model of Claude Code,
+  Codex, or another coding agent. Keep the agent's conversational model unchanged.
+- POST https://api.experientiallabs.ai/v1/systemone with the SAME Experiential xpl_ key in Authorization:
+  Bearer. Read the key from EXPERIENTIAL_API_KEY; never send it to api.typesafe.ai.
+- Minimal body: {"model":"jev-latest","state":"All tests passed; a security review is still pending.","questions":{"ready":{"type":"noul","instructions":"Is this change ready to deploy without further review?"}}}
+- Read answers.ready.noul as a probability, not a Boolean or permission to execute
+  an action. Choice questions supply a criteria map; score questions supply an
+  ordered criteria array. State may be text, an object, or an array. Questions
+  are evaluated independently against the same state.
+- Chat Completions, Responses, Messages, OpenAI tool calls, and streaming are NOT
+  supported for Jev. A chat-family call is refused with unsupported_capability
+  (Messages uses invalid_request_error); follow the /v1/systemone remedy.
+- Provider-documented input context is approximately 32,000 tokens SHARED by
+  state and all questions. It is not a total input-plus-output window. Total
+  context_window, derived max_input_tokens, and max_output_tokens remain unknown
+  in the catalog API. Do not treat null as unlimited.
+- Gateway bounds, distinct from provider limits: 32 questions, 64 choice options,
+  2 to 10 score criteria, 262,144 input JSON bytes, 64 nesting levels. No automatic
+  retries or idempotency guarantee: a timeout may still represent provider work.
+- Gateway examples and coding-agent prompt: https://platform.experientiallabs.ai/docs/integrate#typesafe.
+  Official usage: https://docs.typesafe.ai/introduction/quickstart;
+  input budget: https://docs.typesafe.ai/primitives;
+  agent skill: https://docs.typesafe.ai/agent-skill;
+  launch: https://typesafe.ai/blog/introducing-system-one-models-and-jev.
+  Upstream docs/skills assume a TypeSafe key and origin: explicitly override both
+  for Experiential. The official skill does not make Jev a chat backend.
+
+## Zero data retention (ZDR): what the platform keeps, and the toggle
+
+Plain facts an agent can act on with only the org's xpl_ key (org_id from
+GET https://api.experientiallabs.ai/api/whoami). Full detail: https://platform.experientiallabs.ai/docs/data-controls; machine-readable
+copy of this section plus the live provider matrix: https://platform.experientiallabs.ai/.well-known/ai-data-policy.json.
+- The serving path is content-free: the request ledger keeps metadata only
+  (request id, model, provider, tokens, cost, timestamps, status) and refuses
+  prompt or response bodies by database constraint.
+- The platform retains NO prompt or response content when the org switch
+  "capture_prompt_content" is off. Off is the default for Pro organizations
+  (the database turns it off the moment an org becomes Pro and deletes what
+  was captured before); Free organizations default to on. While off, nothing
+  is written for new requests and previous_response_id on /v1/responses cannot
+  be resolved (resend the full conversation). Requests served on your own
+  provider key never leave content on the platform on any plan. Requests routed
+  under a ZDR requirement ("require_zdr", the account-wide switch, or a
+  per-request provider.zdr) are never captured, even when capture is on, and
+  keep no Responses conversation state either: such a request carrying
+  previous_response_id is refused before dispatch with 400
+  code=zdr_continuation_disabled (send the full conversation in "input"), unless
+  the org opts in with PUT https://api.experientiallabs.ai/api/orgs/<org_id>/provider-policy
+  {"zdr_continuation_storage": true} (Pro, like require_zdr): the trade-off is
+  that the platform then keeps that conversation state itself (30 days, under
+  the capture switch); it is still never sent to a retaining provider.
+  Uncensored models ("uncensored": true on GET /v1/models) are the opposite:
+  requests to one are captured even with capture off (the usual size caps
+  still apply), turning capture off leaves those captures in place,
+  Experiential Labs keeps a copy after the organization or account is
+  deleted, they are served only on Experiential-funded routes (never on your
+  own provider key), none of their routes is ZDR, and a ZDR-routed request for
+  one is refused before dispatch with 403 code=uncensored_requires_retention.
+    GET https://api.experientiallabs.ai/api/orgs/<org_id>/telemetry-settings
+    PUT https://api.experientiallabs.ai/api/orgs/<org_id>/telemetry-settings   {"capture_prompt_content": false}
+  Turning it off needs Pro (or a grandfathered org): a Free org gets 403 with
+  code "needs_subscription". Turning it on has no plan gate. Each flip is
+  audited (telemetry.capture_disabled / telemetry.capture_enabled).
+- Prompt caching (every plan): PUT
+  https://api.experientiallabs.ai/api/orgs/<org_id>/provider-policy {"prompt_caching": false} turns it
+  off across providers. The gateway then adds no caching of its own (no
+  cache-affinity key, no automatic Vertex AI cache, no cache-based placement)
+  and drops cache_control markers and prompt_cache_key before dispatch, naming
+  each in x-experiential-ignored-parameters. Providers that cache on their own
+  may still do so: the header then carries
+  prompt_caching->best_effort(provider_caches_implicitly).
+- "require_zdr" is the org toggle that removes every non-zero-data-retention
+  provider (and model family) from routing for the org, on every lane, BYOK
+  included, before any request is sent; non-qualifying rungs are never tried,
+  not even as fallback. An Experiential Cloud route that honors a per-request
+  zero-retention constraint is KEPT and dispatched constrained: it serves from
+  the upstream's published zero-retention list (last verified at the time on_request_listing.synced_at states on GET https://api.experientiallabs.ai/api/v1/endpoints/zdr; older than 72 hours withdraws it) or refuses,
+  and the upstream it selected is recorded on the attempt; natively
+  zero-retention rungs are dialed first. A model with no qualifying rung is refused with 403,
+  code model_not_granted, type permission_error, and a message naming the
+  model, the toggle (require_zdr) and the providers that were excluded.
+  Unknown providers count as not-ZDR (fail closed). "require_no_training" does
+  the same on the no-training flag. Zero data retention is a Pro feature:
+  turning require_zdr on (here, with the account-wide switch, or per request
+  with provider.zdr) needs Pro or a grandfathered org, else 403 with code
+  "needs_subscription" (the same gate as turning storage off); an org that
+  already holds require_zdr keeps it. require_no_training needs no plan.
+    GET https://api.experientiallabs.ai/api/orgs/<org_id>/provider-policy
+    PUT https://api.experientiallabs.ai/api/orgs/<org_id>/provider-policy
+        {"allowed_providers": null, "require_zdr": true, "require_no_training": false}
+    DELETE https://api.experientiallabs.ai/api/orgs/<org_id>/provider-policy
+  Partial document: send only the fields you change, omitted fields keep their
+  stored value; audited as provider_policy.set. Keep allowed_providers
+  null: a provider allowlist is an Enterprise capability (403 "enterprise_required"
+  otherwise). While the account-wide switch is on, lowering require_zdr or
+  require_no_training is refused with 409 "zdr_switch_enforced" (turn the switch
+  off first; allowlist and region edits pass). Takes effect on the gateway's next
+  catalog refresh (seconds).
+- ONE switch for the whole account: PUT https://api.experientiallabs.ai/api/orgs/<org_id>/zero-data-retention
+  {"enabled": true} sets all three facts in one audited action (storage off,
+  require_zdr, require_no_training) in one database transaction; GET returns
+  enabled (true only while all three hold), partial (turned on yet a fact no
+  longer holds), enforced_at, the facts and models_with_zdr_route (judged
+  through this org's own allowlist). It ENFORCES:
+  a model with no zero-retention route is refused. The storage leg needs Pro
+  (403 "needs_subscription" for a Free org; set the two routing toggles on
+  their own instead); turning it off restores storage only for a non-Pro org.
+- Three layers decide a request's retention: the platform (the switch above),
+  the provider we send to (the matrix; an "Experiential Cloud" label takes the
+  REAL host's posture; Experiential Cloud routes retain nothing and do not
+  train when zero-data-retention routing is on, some routes may retain or
+  train for plain requests, and zero-retention availability is last verified
+  against the upstream's published list at the time GET https://api.experientiallabs.ai/api/v1/endpoints/zdr
+  states as on_request_listing.synced_at; a verification older than 72 hours
+  withdraws zero data retention on request until the daily check succeeds
+  again), and whoever is behind a router (a relay lane carries
+  the upstream vendor's retention, so relay routes to closed-weights vendors
+  and a constrained route's default routing are classed not-ZDR; a customer Modal
+  deployment is ZDR only on Modal Server / Auto Endpoint / Inference
+  surfaces). No zero-retention route anywhere today: claude-fable-5/5.1 and
+  claude-mythos-5/5.1.
+- Per request: a top-level "provider": {"zdr": true} (the OpenRouter-compatible field shape)
+  on POST /v1/chat/completions, /v1/responses or /v1/messages (extra_body)
+  demands the same routing for that one request. Tightens only: no org policy
+  is judged as require_zdr on; with a policy, require_zdr is forced on and an
+  allowlist stays. Same filter as the toggle (native ZDR rungs, then the
+  constrained route sent the per-request zero-retention constraint);
+  x-gateway-zdr: true when served; 403 model_not_granted naming provider.zdr
+  and the excluded providers when no rung qualifies. Other provider.* keys go
+  verbatim to a constrained route on the OpenRouter-compatible Chat wire and are dropped elsewhere. Honored once
+  the deployed engine pin declares the field; on an earlier pin every one of
+  the three endpoints refuses the body before dispatch with 400 "The parameter
+  'provider' is not supported by this gateway profile." (never silently
+  ignored).
+- The provider matrix the toggle is judged against (per provider, with
+  per-model-family exceptions, from each provider's documented default API
+  terms; re-attested at least every 30 days):
+    GET https://api.experientiallabs.ai/api/orgs/<org_id>/provider-data-controls
+  Per model, GET https://api.experientiallabs.ai/v1/models carries "data_policy"; every ZDR rung with
+  its capability flags: GET https://api.experientiallabs.ai/api/v1/endpoints/zdr (see Models above).
+- Verify per response which provider served it: every completion response
+  (/v1/chat/completions, /v1/responses, /v1/messages, streaming or not) carries
+  x-request-id, x-gateway-provider (the catalog provider of the rung that
+  answered, e.g. bedrock, fireworks, azure_openai; a platform-hosted lane
+  presented as Experiential Cloud reads experiential_cloud), x-gateway-zdr
+  (true|false: that rung's own zero-data-retention verdict in the matrix, at
+  provider + model-pattern granularity; a constrained route reads true exactly
+  when it was dispatched under the constraint), x-gateway-route-depth and
+  x-gateway-route-reason; non-streaming bodies (and
+  the final usage frame of a stream) carry the same name as top-level
+  "provider". After the fact: GET https://api.experientiallabs.ai/api/v1/generation?id=<x-request-id>
+  (provider_name) and GET https://api.experientiallabs.ai/api/gateway/usage/events?org_id=<org_id>
+  (provider, lane, attempt_count). Rungs removed by the policy never appear as
+  attempts.
+- Not attested: no signed tenant-wide ZDR certificate (x-gateway-zdr is the
+  gateway's reading of the matrix, not a provider-signed statement), no
+  data-region choice; a constrained route's zero retention is the upstream's own
+  promise against its published zero-retention list, and Wafer's per-request header
+  is not sent (its lane is classed not-ZDR). Vulnerability contact:
+  https://platform.experientiallabs.ai/.well-known/security.txt.
+
+## OpenAI-compatible inference API
+
+GET https://api.experientiallabs.ai/v1/models
+  -> {"object": "list", "data": [{"id": "<slug>", "object": "model",
+     "created": 0, "owned_by": "exp"}]}
+  Scoped to the key's organization.
+
+POST https://api.experientiallabs.ai/v1/chat/completions
+  Standard OpenAI Chat Completions. "model" MUST be a slug from /v1/models.
+  "stream": true streams as SSE. Web search is served on every route:
+  "web_search_options", OpenRouter's "plugins": [{"id": "web"}] and the
+  ":online" model suffix all ask for it; a route with no native search runs
+  ONE gateway web search (Exa) for the latest user turn, feeds the model the
+  ranked results, and cites sources as url_citation annotations
+  (choices[0].message.annotations; one delta.annotations chunk on a stream).
+  Each gateway-run search is a flat per-search fee (default $0.007, never on
+  BYOK) included in usage.cost; the count is
+  usage.server_tool_use_details.web_search_requests. Only the "web" plugin
+  id is served (other ids -> a named 400); without a search backend the turn
+  still serves and the drop is disclosed (web_search->dropped(...)). Replayed history is served the way OpenAI
+  serves it: "name" on role:"tool" messages is accepted and forwarded on
+  OpenAI wires (dropped with disclosure elsewhere); tool and function
+  "description" strings up to 65,536 chars (longer -> a named 400 stating the
+  limit); tool call ids up to 65,536 chars, signed ids round-trip untouched;
+  duplicate tool call ids inside one assistant turn -> a named 400 (fix the
+  history). Plaintext "reasoning_content" is returned only on lanes whose
+  operator declared the model exposes its reasoning (DeepSeek and Tencent
+  hy4 lanes today); replaying it to any other route drops it with
+  disclosure, never a 400. On a TOOL turn of a preserved-thinking lane the
+  "reasoning_content" you receive is an opaque gateway carrier: replaying it
+  verbatim on that same assistant turn keeps the model's thinking across the
+  tool call, and stripping it is always safe. If your client edits that turn
+  (renames or repairs a tool call, changes its arguments or text), the carrier
+  is dropped with the
+  messages.reasoning_content->dropped(assistant_turn_changed) disclosure and
+  the request is served, never a 400. If the provider that issued it has
+  since left the model's route, it is dropped the same way
+  (messages.reasoning_content->dropped(issuing_route_unavailable)).
+  Tool search is served on every route (engine 0.7.95+): declare OpenRouter's
+  {"type": "openrouter:tool_search"} (optional "max_results", default 5) in
+  "tools" and mark the rarely needed function tools "defer_loading": true.
+  The gateway withholds the deferred definitions from the prompt, exposes ONE
+  tool_search function, and when the model calls it runs a BM25 (or regex)
+  search over the deferred tools' names, descriptions and parameter names,
+  loads the matches, and re-dials the model on the same request. The caller
+  sees only the final tool call; the search round is invisible and counts as
+  one attempt; up to 3 search rounds per request by default. tool_choice
+  "auto" and "required" work; a tool_choice object naming tool_search is not
+  supported yet (experientiallabs/experiential#1047). With no deferred tool
+  the declaration is dropped and disclosed
+  (tool_search->dropped(no_deferred_tools)). Why: MCP-heavy clients with
+  hundreds of tools spend 100k+ tokens per turn on tool definitions; tool
+  search keeps only the relevant ones in context.
+
+POST https://api.experientiallabs.ai/v1/responses
+  Standard OpenAI Responses. "stream": true streams as SSE. "previous_response_id"
+  continues a prior response on any worker instance; continuations are retained
+  for 30 days from the last turn, and only while the organization keeps prompt
+  capture on. An unknown or expired id -> 400 code=previous_response_not_found:
+  resend the full conversation. Under zero-data-retention routing (require_zdr,
+  the account-wide switch, or provider.zdr) previous_response_id -> 400
+  code=zdr_continuation_disabled unless the org opted in with
+  zdr_continuation_storage (see "Zero data retention"). "store" is gateway retention: "store": false
+  skips retention, so that response cannot be continued from; nothing is ever
+  stored with the upstream provider either way. On native OpenAI routes the
+  reasoning passthrough ships end to end: include=["reasoning.encrypted_content"]
+  returns the encrypted reasoning carrier and accepts it back as input; a
+  reasoning item replayed by id alone (no encrypted_content, the "store": true
+  pattern) is carried verbatim for the provider to resolve; and
+  "reasoning": {"summary": ...} is honored. An encrypted reasoning item is
+  bound to the provider account that sealed it: replay one that another lane,
+  account, or tool produced and the provider refuses it
+  (invalid_encrypted_content). The gateway then re-dials the same lane once
+  with the refused reasoning items stripped (your message, tool-call, and
+  tool-result items are kept) and answers with the response header
+  x-gateway-replay-repair: encrypted_reasoning_stripped; hidden reasoning
+  continuity is lost for those items only. Keep replaying only the reasoning
+  items this gateway returned to you. Non-function tool types in "tools"
+  (custom, namespace, tool_search) are carried to the provider verbatim on
+  native OpenAI routes. On any other route a custom (freeform) tool is served
+  as a function with one string "input" (a declared grammar is stated in its
+  description, not enforced; a route with a native OpenAI rung prefers it when
+  a grammar is declared) and its calls come back as custom_tool_call items,
+  disclosed in x-experiential-ignored-parameters as
+  tools.custom->translated(custom_as_function_input) (plus
+  tools.custom.format->translated(grammar_as_instructions) with a grammar); a
+  namespace's tools are hoisted to functions and come back namespaced. Chat
+  Completions accepts the same custom tools in its own spelling ({"type":
+  "custom", "custom": {"name", "description", "format"}}, tool_choice
+  {"type": "custom", "custom": {"name"}}, tool_calls of type "custom"), while {"type":
+  "tool_search"} (OpenAI's hosted spelling) with "defer_loading": true
+  function tools is run by the gateway itself exactly as on Chat Completions
+  above: deferred definitions withheld, one tool_search function exposed,
+  BM25/regex search, same-request re-dial, only the final tool call returned.
+  The web_search tool (and
+  web_search_preview, and the ":online" model suffix) is the exception: on a
+  native OpenAI route the provider's search runs; on any other route the
+  gateway runs one web search itself (Exa), cites sources as flat
+  url_citation annotations on the output_text part (each announced by
+  response.output_text.annotation.added), and reports the count and the flat
+  per-search fee through usage.server_tool_use_details.web_search_requests
+  and usage.cost. function_call
+  "namespace" and SDK 3.0 "caller" attribution round-trip on native OpenAI
+  routes and are dropped with disclosure elsewhere; function_call_output
+  "output" may be a string or a list of input_text/input_image parts
+  (input_file parts -> a named 400).
+  The same path also serves a WebSocket transport: upgrade GET https://api.experientiallabs.ai/v1/responses
+  (wss) with the same Authorization header; frames cross unchanged and
+  "previous_response_id" works the same. A deployment without the transport
+  answers the upgrade 426 code=upgrade_required: POST over HTTP instead
+  (the Codex client falls back on exactly this status).
+
+POST https://api.experientiallabs.ai/v1/messages
+  Anthropic Messages API, translated onto the same chat surface and models.
+  Auth: x-api-key OR Authorization: Bearer (same xpl_ key). "stream": true
+  streams Anthropic SSE events. Extended thinking works on all-Anthropic
+  routes: the thinking config passes through verbatim and thinking/
+  redacted_thinking blocks round-trip with signatures intact. On a
+  non-Anthropic reasoning route the thinking config translates to the route's
+  nearest reasoning effort (disclosed as
+  thinking->reasoning_effort:<tier>(<source>), where source is budget_tokens,
+  lane_default for a bare {type:"enabled"} on a rung that pins a default
+  effort, or gateway_default; an explicit output_config.effort wins and the
+  thinking config is disclosed as superseded). budget_tokens must be below
+  max_tokens (400 on thinking.budget_tokens otherwise, as on Anthropic). A
+  request under 1,024 max_tokens with no reasoning signal of its own runs at
+  reasoning_effort none on a default-reasoning route (disclosed as
+  reasoning_effort->none(max_tokens_headroom)) so the reply has room for
+  text. Usage objects carry Anthropic's four legs, including
+  cache_read_input_tokens and cache_creation_input_tokens from the provider's
+  cache report. On a route with no reasoning the thinking config is
+  dropped with disclosure. OpenRouter's reasoning object ({effort} or
+  {max_tokens}, enabled) is accepted beside thinking and wins when both are
+  present. A reasoning-exposed non-Anthropic rung returns the model's own
+  reasoning as an unsigned thinking block (sealed in a trailing
+  redacted_thinking block on tool turns) that replays on the next turn;
+  Anthropic-signed thinking BLOCKS replayed onto a non-Anthropic route are
+  dropped with the messages.thinking->dropped(unsupported_by_provider)
+  disclosure, not a 400.
+  Image blocks are served on every route whose model accepts images, up to
+  100 per request; document (PDF) blocks need a document-capable route
+  (otherwise a named 400 naming "messages"). tool_result.is_error=true is
+  native on Anthropic rungs and folds into the result text on every other
+  wire (disclosed), never a 400. max_tokens below OpenAI's 16-token floor
+  rides the floor on OpenAI routes. Idempotency-Key is not honored here,
+  /v1/messages/count_tokens answers an explicit 404 not_found_error (estimate
+  locally), and errors use Anthropic's envelope
+  {"type":"error","error":{"type","message"}} at the same statuses as below.
+  Anthropic server tools: web_search tool types serve end to end on Anthropic
+  routes (server_tool_use and web_search_tool_result blocks and
+  citation-bearing text stream through intact and round-trip as history); on a
+  route with a non-Anthropic rung the gateway runs the web search itself
+  (Exa) and answers the same shape -- server_tool_use ({query}) and
+  web_search_tool_result blocks ahead of the answer, the count on
+  usage.server_tool_use.web_search_requests, a flat per-search fee (default
+  $0.007, never on BYOK) in usage.cost. Without a search backend the turn
+  still serves and the drop is disclosed (web_search->dropped(...)).
+  Anthropic tool search: {"type": "tool_search_tool_bm25_20251119", "name":
+  "tool_search"} (regex variant tool_search_tool_regex_20251119) with
+  "defer_loading": true on the rarely needed tools passes through on an
+  all-Anthropic route; on any other route the gateway runs the search itself
+  (deferred definitions withheld, one tool_search function exposed, matches
+  loaded and the model re-dialled on the same request, only the final tool
+  call returned, up to 3 rounds). No deferred tool ->
+  tool_search->dropped(no_deferred_tools).
+  A bare thinking {type: enabled} is accepted (the rung's default effort on
+  effort routes). Block cache_control markers are preserved on supported Anthropic
+  and OpenRouter adapters and translated into Bedrock cache checkpoints. Unsupported
+  generic adapters disclose markers as not_forwarded(provider_decides_caching; cache reads
+  reported in usage.cache_read_input_tokens). Cache reads bill at the cached rate;
+  authoritative per-turn usage is on message_delta
+  (message_start carries the gateway's pre-dispatch estimate on
+  non-Anthropic routes).
+  Prompt caching is route-dependent: a listed cached price does not guarantee a hit.
+  There is no universal organization caching switch or strict request-level cache-capable-route guarantee.
+  Platform-funded one-hour cache markers are refused until duration-specific pricing exists;
+  use the default five-minute markers. Verify cache reads/writes and ignored-parameter
+  disclosures on your selected route. Chat usage.prompt_tokens_details exposes cached_tokens
+  and observed cache_write_tokens; prompt_cache_key is an affinity hint, not cache activation.
+  Block-level cache_control markers on system blocks,
+  message text, and tool_result reach Anthropic routes verbatim, and usage
+  reports cache_creation_input_tokens / cache_read_input_tokens with
+  input_tokens excluding both, exactly like the provider.
+
+- Reasoning effort ("reasoning_effort" on chat, "reasoning": {"effort": ...} on
+  Responses, "output_config": {"effort": ...} on Messages) passes through when
+  supported. If an effort is unsupported and the route's capability policy
+  permits coercion, the gateway tries supported levels at or below the requested
+  level, closest first, and uses only one compatible with the rest of the request.
+  It never raises an explicit effort. If no such level is admissible, the request
+  returns 400. Explicit "none" means reasoning off and can return 400 when the
+  route cannot turn reasoning off; "minimal" still enables reasoning. A route
+  supporting only minimal, low, medium, high cannot honor none: it is not
+  upgraded to minimal. On a route with no reasoning support, an effort may be
+  dropped only when policy permits and the rest of the request remains admissible.
+  "max" is the top tier. Every substitution or drop is disclosed on OpenAI-shaped
+  responses in a top-level "x-experiential-ignored-parameters" array; nothing is
+  silently rewritten.
+- Idempotency-Key is honored on Chat Completions and Responses, NOT embeddings:
+  an exact retry on those completion routes with the same
+  key replays the original result; the same key with a different body -> 409
+  idempotency_conflict.
+- Unserved /v1/* paths answer 404 code=not_found in the OpenAI error envelope.
+
+## Error envelope (all /v1 routes; /v1/messages wraps the same statuses and
+## meanings in Anthropic's envelope instead)
+
+Errors are {"error": {"message", "type", "code", "param"?, "refusal_reason"?}}.
+Stable codes (code -> HTTP status -> meaning -> recovery):
+  invalid_json 400            body is not valid JSON -> fix the request.
+  invalid_request 400         malformed request -> read message, fix, resend.
+  invalid_parameter 400       a field is invalid ("param" names it) -> fix it.
+  unsupported_capability 400  a whole capability the route does not expose (a
+                              tool, a modality, reasoning) -> pick a capable
+                              model; check supported_params and modalities in
+                              /api/models.
+  unsupported_parameter 400   a specific field the route rejects, e.g.
+                              temperature on a reasoning-only route or top_k /
+                              frequency_penalty / presence_penalty / top_logprobs
+                              where unaccepted ("param" names it) -> remove the
+                              field or pick a model that lists it.
+  refusal 400                 the provider refused the request on policy
+                              grounds. Message is always "provider refused the
+                              request: <phrase>" (fixed phrase, never provider
+                              prose) and the envelope adds refusal_reason, one
+                              of cyber_policy | cbrn | content_policy |
+                              recitation | data_inspection | unspecified, e.g.
+                              {"error":{"message":"provider refused the request:
+                              cybersecurity policy","type":"invalid_request_error",
+                              "param":null,"code":"refusal","refusal_reason":
+                              "cyber_policy"}}. Present on chat/completions,
+                              responses, and messages refusals; absent on every
+                              other error. Retrying does not help -> change the
+                              request or pick another provider's model. Not a
+                              key, credit, or limit problem.
+  previous_response_not_found 400  previous_response_id is unknown or expired
+                              -> resend the full conversation.
+  zdr_continuation_disabled 400  previous_response_id on a request routed with
+                              zero data retention: the platform keeps no
+                              conversation state for it -> send the full
+                              conversation in "input", or opt in with
+                              PUT /api/orgs/<org_id>/provider-policy
+                              {"zdr_continuation_storage": true}.
+  invalid_key 401             missing/bad/expired/revoked key -> fix Authorization.
+  uncensored_requires_retention 403  an uncensored model is only served with
+                              prompt and response retention, and the org
+                              (require_zdr) or the request (provider.zdr)
+                              demanded zero data retention -> pick another
+                              model.
+  model_not_granted 403       your org cannot call this slug, or the slug is
+                              misspelled -> use one from /v1/models. Slugs are
+                              the dot form (claude-fable-5.1); Anthropic's
+                              dashed wire ids (claude-fable-5-1) get this 403.
+  idempotency_conflict 409    same Idempotency-Key, different body -> new key.
+  idempotency_replay_unavailable 409/500  original keyed result gone after a
+                              restart -> resend with a new Idempotency-Key.
+  insufficient_quota 429      a spend limit, a free tier, or your credit
+                              balance is exhausted; the message names which:
+                              key_daily_cap (this key's daily cap; resets 00:00
+                              UTC or raise it), a team/org budget,
+                              insufficient_credits (add credits at
+                              https://platform.experientiallabs.ai/credits), free_limit_reached (the free
+                              tier's allowance is spent: wait for the reset or
+                              enable credits overflow, see Two lanes),
+                              free_tier_requires_payment (the free tier needs a
+                              saved card AND a settled $1 charge),
+                              model_requires_payment (the model or its lanes
+                              need a completed top-up; the $1 verification
+                              counts), model_requires_purchase (its lanes need
+                              a real credit purchase; the $1 verification does
+                              not count), promo_byok_only (the promotion does
+                              not cover the full cost and the credit balance
+                              cannot cover the rest: add credits or use BYOK).
+                              Platform-funded lane only.
+  org_under_review 429        the org is quarantined and cannot use models on
+                              ANY lane (BYOK included) until the review is
+                              lifted. The message says why in one low-detail
+                              sentence: "too many of its requests were refused
+                              by model providers for policy reasons" (a
+                              refusals quarantine; adding credits does NOT lift
+                              it), "for suspicious activity", "payment
+                              verification did not complete", "the signup email
+                              could not be delivered", or the generic "to fight
+                              spam". Never counts or thresholds. -> reach us on
+                              Discord or by email from the signed-in banner; an
+                              operator reviews and releases. A settled payment
+                              lifts every review except refusals, manual network
+                              reviews and payment-review holds.
+  unavailable_route 429/503   throttled or no healthy route right now -> retry
+                              with backoff.
+  gateway_overloaded 429      -> retry with backoff.
+  request_cancelled 499       the client disconnected before completion.
+  all_routes_failed 502       every provider in the waterfall failed -> retry;
+                              if BYOK, check your provider key. Message
+                              "provider stream failed" = the provider closed
+                              the stream before completing (a provider-side
+                              drop, not a gateway fault): retry with backoff.
+  backend_unavailable 502     "Serving backend failed": the edge could not
+                              reach a gateway worker (a rolling deploy or a
+                              worker outage) -> retry with backoff; if it
+                              persists for minutes, the gateway is down.
+  provider_output_too_large 502  -> lower max output tokens.
+  gateway_draining 503        instance is draining -> retry (hits another).
+  deadline_exceeded 503       request ran past the deadline (no first byte in
+                              90 s) -> retry after Retry-After (2 s) or shorten.
+  internal_error 500          -> retry with backoff.
+Retry 429 (throttled)/502/503/504 with backoff. Do NOT blindly retry
+400/401/403/409: fix the request first. Retries can double-bill a provider
+(at-least-once); Chat Completions and Responses honor Idempotency-Key for replay,
+but embeddings do NOT. Repeating an embeddings request can incur another charge.
+
+## Management API (same Bearer key; https://api.experientiallabs.ai/api)
+
+Catalog reads (keyless-public: public rows without a key, plus your org's own
+rows when you send your key):
+  GET  /api/models[?modality=&category=&provider=&min_context=&sort=&limit=&offset=]
+  GET  /api/models/<slug>
+  GET  /api/models/<slug>/providers
+Custom and local models and waterfalls (the key acts for its own org):
+  POST /api/models                      create a custom model: {slug, display_name,
+                                        providers:[{provider, provider_model_id,
+                                        base_url?, ...}]}
+  POST /api/models/<slug>/providers     add a deployment or local variant
+  GET/PUT /api/models/<slug>/waterfall  read or replace the ordered chain
+                                        ({model_provider_ids:[...]})
+BYOK provider connections:
+  GET  /api/orgs/<org_id>/provider-connections
+  PUT  /api/orgs/<org_id>/provider-connections/<provider>       connect/rotate
+                                        ({secret, config})
+  POST /api/orgs/<org_id>/provider-connections/<provider>/check verify
+Data controls (the key acts for its own org; see "Zero data retention"):
+  GET  /api/orgs/<org_id>/provider-data-controls     the provider ZDR matrix
+  GET/PUT/DELETE /api/orgs/<org_id>/provider-policy  require_zdr / require_no_training
+  GET/PUT /api/orgs/<org_id>/telemetry-settings      capture_prompt_content
+  GET/PUT /api/orgs/<org_id>/zero-data-retention     the account-wide switch ({"enabled": bool})
+Usage and keys:
+  GET  /api/gateway/usage/daily?org_id=&scope=&group_by=   rollup (day|model|member)
+  GET  /api/gateway/usage/events?org_id=...                per-request stream (tokens incl. cached_input_tokens / reasoning_tokens; charged, estimated and free money)
+  GET  /api/gateway/catalog?org_id=...                     aliases as your org
+                                        resolves them, with each one's lane
+  GET  /api/keys                                           the org's keys (never
+                                        secrets)
+Exact Spend reporting (provisioning xpl_ Bearer key, your organization only):
+  Canonical base: https://api.experientiallabs.ai/api/orgs/<org_id>/spend. The dashboard uses the same stores.
+  POST /api/orgs/<org_id>/spend/analytics    {query,refresh:false,comparison?:"previous_elapsed"}
+  GET  /api/orgs/<org_id>/spend/analytics/<id> resume the same load; optional comparison=previous_elapsed
+  DELETE .../spend/analytics/<id>/comparison cancel optional work only (204)
+  POST /api/orgs/<org_id>/spend/view         frozen query -> {report,series:{status:"ready",data}|{status:"unavailable",reason:"error"}}
+  POST /api/orgs/<org_id>/spend/latest       {query} -> validated {build,report} or null
+  POST /api/orgs/<org_id>/spend/snapshot     {query} -> server-frozen query
+  POST /api/orgs/<org_id>/spend/builds       {query} -> free durable preparation
+  GET  /api/orgs/<org_id>/spend/builds/<id>  status and committed progress
+  GET  .../spend/builds/<id>/report          prepared totals/groups/buckets
+  GET  .../spend/builds/<id>/series          prepared global leaders plus Other
+  GET  .../spend/builds/<id>/export          prepared exact formula-safe CSV
+  POST /api/orgs/<org_id>/spend/query        totals, calendar buckets, grouped rows
+  POST /api/orgs/<org_id>/spend/facets       observed dimension/tag values
+  POST /api/orgs/<org_id>/spend/series       selected-dimension stacks and spend leaders
+  POST /api/orgs/<org_id>/spend/activity     exact filtered request/attempt detail
+  POST /api/orgs/<org_id>/spend/export       complete snapshot as formula-safe CSV
+  Get your org_id from GET /api/whoami. Every Spend route, including handles,
+  requires a provisioning key: inference keys get403, foreign orgs404.
+  Keys cannot impersonate a member with an actor header;
+  scope=self requires a signed-in member. Backend members retain USER reads;
+  browser routes retain their existing admin gate, not cookie-free key access.
+  GET /api/v1/key is the presented key's own summary. Do not generalize that
+  rule to all inference reads: existing Cost API activity and usage exports
+  retain documented org scope (with separate plan-bound identity restrictions).
+  Start with POST /analytics using an unpinned query, refresh:false, and optional
+  comparison:"previous_elapsed". Loading returns {id,status:"loading",report:null,
+  build:null,error_code:null}; retain id and poll GET /analytics/<id>, never POST
+  again for an unknown outcome. Ready returns report with optional build; its id
+  can be null on the fast path. Failed has error_code and no report.
+  Server acquisition lasts60seconds from issuance; the dashboard observes for
+  up to70seconds, not a longer server deadline or per-request HTTP timeout.
+  Keep bounded poll counts and network timeouts. No Retry-After is promised.
+  A known id resumes by GET; a lost POST response without an id needs explicit
+  reconciliation, not an automatic new admission.
+  Query example (replace dates with your desired UTC interval):
+    {"start":"2026-09-01T00:00:00Z","end":"2026-09-08T00:00:00Z",
+     "time_zone":"UTC","scope":"org","basis":"requests","group_by":"model",
+     "filters":[],"tags":[{"key":"run","values":["eval-baseline"],"missing":false}]}
+  Dimensions: model, app, key, member, end_user, provider, funding, surface,
+  outcome, error, prompt, tag, source. app = calling agent (claude_code, codex,
+  opencode, hermes, ...). group_by=tag also needs tag_key. filters entries: {dimension,values,missing,exclude?:true}; tags
+  entries: {key,values,missing,exclude?:true}. Values OR within one predicate;
+  predicates AND together. exclude=true negates that value/missing set, so All
+  except selected values works across facet pages. No predicate means All;
+  an empty included set means None. Omit exclude for ordinary inclusion.
+  missing=true includes unlabeled usage in the set (excludes it in exclude mode).
+  Ready analytics returns the frozen report.query: C=coverage.projected_through
+  is Data through; F=query.as_of=coverage.as_of is the visibility fence. C can
+  precede F. Reuse F and snapshot_id together across query/view/series/facets/
+  Activity/export and matching build handles. /view requires a registered F.
+  Page an ordinary table by POST /query with the frozen query and next_offset;
+  stop at null. A regrouped table does NOT reuse a differently grouped build id.
+  /latest is optional discovery only: without comparison it returns {build,report}
+  or null; with comparison:"previous_elapsed" it returns a ready analytics
+  envelope or null. Errors are not misses. Both latest and analytics reject
+  supplied as_of/snapshot_id. An explicit refresh:true bypasses reuse; keep the
+  same-slice complete result visible with its real update time while updating.
+  /snapshot and /builds are explicit lower-level controls, not required before
+  ordinary analytics. Timestamp-only interactive mode is not a registered fence.
+  Expired or privacy-invalidated snapshots fail closed; explicitly refresh.
+  Comparison is optional and never blocks primary figures: status pending/ready/
+  unavailable, no totals until ready. previous_elapsed ends at query.start and
+  has the duration from query.start to min(query.end,C), retaining primary C/F.
+  Pass comparison=previous_elapsed on GET polls too. DELETE comparison preserves
+  the primary. Never turn unavailable comparison into zero or a percentage.
+  Series honors group_by/tag_key and ranks seven entities by
+  spend plus exact Other, independently of table sorting. Missing and Other are
+  distinct kinds; Other is never one model, prompt or tag value.
+  Facets body: {query:<frozen query>,kind:"dimension",dimension:"model",search:""};
+  tag discovery uses kind=tag_keys or tag_values with tag_key for values.
+  Activity body: {query:<frozen query>,cursor:null,include_features:true}; follow
+  next_cursor with the same query. source=intelligence entries are feature
+  charges, not API calls (request_id=null, count=0); report links need member auth.
+  Money fields paid_nano_usd/byok_nano_usd/free_nano_usd are decimal integer
+  strings:1 USD=1,000,000,000 nano-USD. Spend=sum of those three. BYOK/free list
+  values are not credit debits. Funding has platform_funded/pass_through lanes;
+  promo/free is a money component, not a third exclusive lane. Cached tokens are
+  a subset of input; cache read ratio=cached/input, not a request hit rate or a
+  claim about savings. Reasoning tokens are a subset of output.
+  Prompt groups identify repeated content without returning bodies. Signed-in
+  members may inspect captured prompts via GET /api/orgs/<org_id>/usage/requests/
+  <request_id>/prompt under existing capture/privacy/30-day retention controls;
+  ordinary xpl_ keys cannot fetch these bodies. No capture/expired/erased =>404.
+  Interactive bounds:50,000 source calls,100,000 fact versions per basis,
+  368 series buckets,200 groups/page,10,000 CSV groups. On report_too_large or
+  report_timeout with a snapshot_id, POST .../spend/builds {query}, then poll
+  GET .../builds/<id>. Explicit refresh of a prepared result may POST an unpinned
+  query to /builds: freeze/admission is atomic, concurrent identical refreshes
+  within5seconds join active work, and the response retains the actual cutoff.
+  Once completed, read /report (sort,direction,offset,limit), /series or /export
+  from that build. Preparation is free; no partial totals or inference call.
+  Builds expire after24h and retain at most10,000 groups,100,000 cells,32MiB
+  logical output (CSV16MiB). Capacity/output/expiry failures are explicit.
+  Rollout is opt-in: no snapshot_id means preparation is not enabled; retain
+  the interactive limit and narrow dates. Monthly only solves bucket limits.
+  Facets/Activity keep interactive limits even after an aggregate is prepared.
+  Incomplete exports return409; do not treat unknown usage as zero.
+  SpendFigures has exactly11 fields: count,rejected_count,errors,input_tokens,
+  output_tokens,cached_input_tokens,reasoning_tokens,paid_nano_usd,byok_nano_usd,
+  free_nano_usd,unknown_usage_count. No serialized spend_nano_usd on report figures;
+  derive the three-leg sum with integer arithmetic. errors=non-completed outcomes,
+  rejected_count is its failed/expired zero-attempt subset, never additive.
+  Unknown usage makes measured money provisional even under complete coverage.
+  Protocol rejections before admission are not included; pending holds are not Spend.
+  Lightweight summaries: GET /api/orgs/<org_id>/usage/by-key and /usage/by-identity
+  require provisioning strength too. window=24h|7d|30d(default7d). Envelopes carry
+  report_kind:"live_usage_summary", window, and keys or identities. Model rows
+  and key/identity totals retain cost_usd/estimated_cost_usd/free_usd plus exact
+  decimal strings paid_nano_usd/byok_nano_usd/free_nano_usd/spend_nano_usd.
+  spend_nano_usd=paid+byok+free, not all charged. One consistent bounded rollup read,
+  max10,000 key/model cells (not keys),32 MiB source-cell JSON budget; final response
+  formatting has separate overhead. Transport overhead can reach the source-read
+  bound earlier. No offset stitching or partial success.
+  Oversize returns422 code usage_summary_too_large, use Spend analytics.
+  These are live summaries, not certified coverage: unknown usage is not reported,
+  not zero. Never synthesize complete:true or unknown_usage_count:0.
+  Full contracts and bounded curl/Python examples: https://platform.experientiallabs.ai/docs/spend-api.
+  Dashboard guide and request tags: https://platform.experientiallabs.ai/docs/spend.
+  Request tags are API-first: send key/value labels on each inference request,
+  not a separate dashboard creation step. Send X-Explabs-Tags:
+  {"team":"search","run":"eval-September"}. Python SDK calls use
+  extra_headers={"X-Explabs-Tags": json.dumps(tags)}.
+  Supported HTTP POST routes: /v1/chat/completions, /v1/responses, /v1/messages.
+  The gateway collects tags for Spend and strips the header before forwarding to providers.
+  Batch tags and WebSocket tags are not supported; unsupported routes refuse the header.
+  New keys/values are discovered automatically after tagged calls settle and usage
+  updates; no pre-registration or dashboard definition is required.
+  In Spend, Views -> Tag -> team groups teams; Filters -> Tag -> team -> search
+  narrows to that value. Multiple values use OR, separate tag keys use AND.
+  Limits: <=16 entries,8 KiB. Never send secrets, prompts or personal data.
+  Workspace admins may optionally save advisory definitions in the Tags UI.
+  Create tag only saves a suggested pair and copyable header, not request usage;
+  it does not enable collection. Accepted request tags are immutable attribution;
+  later definitions or retries cannot rewrite them. Older untagged calls stay untagged.
+  Member-authenticated catalogue: GET/POST /api/orgs/<org_id>/spend/tag-definitions
+  ({tag_key,tag_value} for POST), GET .../tag-definitions/keys, and DELETE
+  .../tag-definitions/<definition_id>. Exact pairs are idempotent; max1,000 per
+  workspace, pages<=200. Only actual admin members write; xpl_ inference keys
+  cannot use this management door. Definitions do not rewrite past requests,
+  confer permissions, or constrain valid observed tags; deletion preserves
+  observed history. UI marks catalogue entries Defined, not proof of usage.
+  Spend Views select a breakdown independently of Filters. Filters(n) reveals
+  removable pills and immediately opens the picker; edits never change the view.
+  Pinned chart rows open a separate funding popup without resizing the bucket.
+  Spend requires workspace-admin or platform-admin access. Usage intelligence
+  on the Spend page is internal to Experiential (platform admins only) and is
+  not a customer API. Returning to a loaded report
+  preserves its frozen results, rows, scroll and draft without a full reload;
+  explicit refresh still loads a new snapshot. Evals is a separate sidebar
+  page at /evals, preserving the existing platform-admin-only prototype.
+  Spend UI rounds dollars to two decimals (<$0.01 below display precision);
+  API and CSV retain exact integer nano-USD/nine-decimal USD respectively.
+Archived Projects:
+  The trace-backed optimizer, router-building, and Project-serving surfaces are
+  retained for historical data and operator recovery only. Their UI routes are
+  closed and no API key reaches their routes; do not use them as an inference
+  API or as an alternate modeling implementation.
+Trace telemetry (bring your traces in as telemetry only; never a router build;
+the key acts for its org):
+  POST /api/orgs/<org_id>/telemetry/traces/pull   live pull from a provider:
+                                        {transport_kind, source_kind,
+                                        source_label, credential, config?}.
+                                        transport_kind is one of: braintrust,
+                                        langsmith, langfuse, posthog, mastra,
+                                        postgres. The credential is used once and
+                                        never stored on the row.
+  POST /api/orgs/<org_id>/telemetry/traces/upload  JSON {source_kind,
+                                        source_label} returns a short-lived
+                                        signed Storage URL/token (PUT exact raw
+                                        bytes; 2h; path-bound; no overwrite).
+  POST /api/orgs/<org_id>/telemetry/traces/<ingest_id>/finalize
+                                        idempotent 202 accepted; the worker
+                                        verifies the object then projects.
+                                        Same formats and <=50MB as before.
+                                        Arize/Phoenix have no live pull yet, use
+                                        this with source_kind phoenix (or otlp).
+  GET  /api/orgs/<org_id>/telemetry/traces   the org's landed telemetry traces
+                                        plus total_ingests and total_traces (the
+                                        verify-count). Humans see these at
+                                        https://platform.experientiallabs.ai/telemetry. This path never creates
+                                        a Project, preparation, or optimize job.
+Live export to Langfuse (OpenTelemetry; an org admin turns it on once in
+Settings > Connections > Langfuse > Live export, details at https://platform.experientiallabs.ai/docs/telemetry#export):
+  Every /v1 chat, Responses, Messages and embeddings call becomes one span in
+  the org's Langfuse project with input/output, usage, cost, time to first
+  token and errors, streaming included. Send the W3C traceparent header of
+  your active span to nest the call under your app's trace. Optional headers:
+  X-Explabs-Trace-Name, X-Explabs-Session-Id, X-Explabs-User-Id,
+  X-Explabs-Observation-Name; X-Explabs-Tags become observation metadata.
+  ZDR-routed requests export metadata only. Best effort; never affects calls.
+  Covers accepted HTTP calls; pre-admission refusals and Responses over
+  WebSocket are not exported.
+  GET/PUT/DELETE https://api.experientiallabs.ai/api/orgs/<org_id>/observation-export   with the org's own
+    key: {"enabled": true, "include_content": true, "langfuse": {"public_key":
+    "pk-lf-...", "secret_key": "sk-lf-...", "host": "https://us.cloud.langfuse.com"}}
+    connects or rotates Langfuse and turns export on in one call; omit
+    "langfuse" to toggle an existing connection. Keys are never returned.
+Providers accepted on a deployment: openai, anthropic, gemini, azure_openai,
+openrouter, bedrock, local, fireworks, modal, zai, qwen, tencent, vertex,
+meta, cerebras, wafer, huawei, experiential_cloud.
+Experiential Cloud is a curated collection of models, hosted and optimized by
+Experiential Labs. Call it with an xpl_ key. Organizations do not connect
+their own credentials to it. BYOK connections: openai, anthropic, gemini,
+azure_openai, openrouter, bedrock, fireworks, modal, vertex, zai, qwen,
+tencent, meta, cerebras, wafer, huawei.
+
+## Integration API: compatible routes, cost, and account (https://api.experientiallabs.ai/api/v1)
+
+One base URL, https://api.experientiallabs.ai/api/v1, serves inference, model discovery, cost, and key
+management with one xpl_ key. Coming from another gateway such as OpenRouter:
+point base_url at https://api.experientiallabs.ai/api/v1 and keep working; the path shapes match.
+Switching a project from OpenRouter: the "Switch from OpenRouter" prompt under
+"Setup prompts" below is the complete one-paste transfer (base URL and key
+swap, model-id mapping against GET /api/v1/models, the OpenRouter-only fields
+to remove, cost reads, one verified call, BYOK offer); nothing else needs
+reading. OpenRouter-style model ids are accepted at request time only as
+spellings of a catalog slug: <vendor>/<slug> when the vendor names the
+model's maker (or one of its OpenRouter listings) and the part after the
+slash IS the slug, and <slug>:free for a model with a free lane; <slug>:online
+asks for web search (served on every route, per-search fee); :nitro, :floor,
+:thinking and the other OpenRouter suffixes are not spellings and deny like an
+unknown model. Prefer the plain slug.
+Human docs: https://platform.experientiallabs.ai/docs/integrate (paste-able integration prompts + route map),
+https://platform.experientiallabs.ai/docs/cost-api (cost, usage export, attribution, metering), and
+https://platform.experientiallabs.ai/docs/account-api (keys). The two generic integration prompts and both
+provider-specific transfers are also under "Setup prompts" below.
+For Cloudflare AI Gateway, use "Switch from Cloudflare AI Gateway" at
+https://platform.experientiallabs.ai/docs/setup-prompts#switch-from-cloudflare-ai-gateway.
+It inventories rules, trusted customer identities, model groups and allowances,
+reset/carry-in semantics, cost basis, BYOK/custom providers, privacy, cache and
+retry behavior before proposing changes. Existing Account/Cost APIs are not proof
+of customer-plan parity: discover native policy APIs in this deployment's live
+docs, verify their deployment and test the actual workflow. External subscription
+events, polling settled exports and invoicing remain application integration.
+Wallet charges and attributed BYOK estimates are distinct. Tinfoil attestation
+needs separate proof; Modal stays separate. Ask before writes, spend, privacy
+changes, cutover or secret revocation. Stop before cutover on unsupported
+requirements or absent live verification; never assume full Cloudflare parity.
+
+Custom endpoints: https://platform.experientiallabs.ai/docs/integrate#custom-endpoints documents the exact
+model-bound create/check and optional rate_card contract. Both custom endpoint
+POSTs need a unique explicit setup_alias. Creation is create-only (409 on an
+existing name); tests and creation probes may incur provider charges. Rates
+are integer nano-USD per million tokens, never extra auth/provider config.
+Missing custom rates are unknown, not public-provider rates and not zero.
+Attempts freeze the selected full schedule, pricing_source digest and effective
+date. To change a custom key or card, create a new custom account then explicitly
+select Use on the model; generic provider PUT/check refuses custom accounts
+before an official-provider probe. Preserve the old account for rollback.
+
+Serving and discovery (1:1 relay to the gateway worker; OpenAI / Anthropic wire
+formats unchanged): POST /api/v1/chat/completions, POST /api/v1/responses (HTTP
+or WebSocket upgrade), POST /api/v1/embeddings (text or token IDs, no streaming or replay),
+POST /api/v1/messages (Anthropic Messages API). GET /api/v1/models lists the same
+callable set as /v1/models in the vendor-prefixed id shape.
+The POST routes are rewritten to their /v1 twins before auth, so https://api.experientiallabs.ai/api/v1 behaves
+exactly like https://api.experientiallabs.ai/v1 for them.
+Catalog (control plane): GET /api/v1/models/{author}/{slug}/endpoints (per-model
+provider waterfall; {author} is accepted but resolution is by {slug}), GET
+/api/v1/providers. Metadata we do not track is null or omitted, never faked.
+
+Cost API (read-only; an ordinary inference key):
+- Inline: usage.cost (USD, what was charged) is stamped on every Chat/Responses/
+  Messages reply, on the final usage chunk when streaming (message_delta on
+  Messages), no flag needed (usage.include
+  and stream_options.include_usage are accepted no-ops). BYOK settles cost 0
+  with usage.is_byok true and usage.cost_details.upstream_inference_cost. The
+  top-level provider field names the rung that actually served (tencent,
+  fireworks, ...), since a waterfall can fail over silently; a lane the
+  platform presents as its own reads experiential_cloud there and in every
+  catalog and usage view (same field, same routing and prices). A
+  request sent with Idempotency-Key carries NO usage.cost on the original or a
+  replay (bytes stay identical): treat the field as optional; the export row
+  still exists.
+- One request: the completion response carries an x-request-id header (the
+  gateway request id); GET /api/v1/generation?id=<id> (bare or gen-<id>)
+  returns {data:{total_cost, provider_name, tokens...}}. Org-scoped: another
+  org's id 404s like an unknown one.
+- Balance: GET /api/v1/credits -> {data:{total_credits, total_usage}} in USD;
+  balance = total_credits - total_usage. Recent rollup: GET /api/v1/activity.
+- Presented key: GET /api/v1/key -> usage/limit/limit_remaining for the key
+  making the call (limit is a daily USD cap; needs an xpl_ credential, a
+  browser session 400s).
+- Settled export: GET /api/v1/usage?limit=1000 -> {data:[row...],
+  next_cursor:{cursor_ts,cursor_id,cursor_after}|null}, newest first; pass the
+  three cursor values back as query params for the next page; filters
+  attribution_label, model, api_key_id, status, window. Row fields: id,
+  created_at, model, provider, attribution_label, real_cost_usd (= cost_usd +
+  estimated_cost_usd; 0 with pricing_known false means unpriced, not free),
+  cost_usd (charged credits only), estimated_cost_usd (attributed BYOK value at
+  catalog list rates: an estimate, never the provider's invoice),
+  pricing_known, input_tokens, output_tokens, cached_input_tokens,
+  reasoning_tokens, status, api_key_id. Rows never change once settled. Pull /
+  poll; no webhook.
+- Attribution: send the end-customer's stable id as safety_identifier (alias:
+  user) on every request; it comes back as attribution_label.
+- Metering pattern (consumption credits via Metronome / Orb / Stripe meters):
+  tag requests with safety_identifier. next_cursor pages OLDER within one call's
+  window (24h|7d|30d, default 7d); it is NOT a cross-run checkpoint. Each
+  scheduled run starts at the top of GET /api/v1/usage?limit=1000, follows
+  next_cursor until a whole page is older than the last successful run's start
+  minus a grace period, and dedupes on row id; run at least daily (rows older
+  than 30d are not exportable). Land rows in a local outbox keyed on row id in
+  one transaction, then a separate delivery step pushes unsent rows: one usage
+  event per row with transaction_id/idempotency key = row id, timestamp =
+  created_at, quantity = real_cost_usd (or cost_usd plus tokens for BYOK rows,
+  since estimated_cost_usd is a catalog-rate estimate, never the provider's
+  invoice). Price the margin in the billing system, not the sync. Reconcile the
+  export's cost_usd column (charged credits only) summed per day against the
+  movement of /credits total_usage. Bill from the export, never from the inline
+  usage.cost.
+
+Account API:
+- One xpl_ key type. A normal key is an INFERENCE key: inference plus every
+  read above. A PROVISIONING key is the same xpl_ key minted with
+  "provisioning": true (api_keys.is_provisioning); the whole /api/v1/keys*
+  family (GET/POST/PATCH/DELETE, reads included) is gated behind it and a
+  normal key gets 403. The FIRST provisioning key is minted from the dashboard
+  at https://platform.experientiallabs.ai/api-keys (a signed-in org admin satisfies the same gate);
+  thereafter a provisioning key mints more via POST /api/v1/keys. Keep it
+  server-side; never use it for inference traffic.
+- GET /api/v1/keys (revoked hidden unless ?include_disabled=true); POST
+  /api/v1/keys {name (required), limit (daily USD cap), provisioning (bool)} ->
+  {data:KeyResource, key:"xpl_..."} (plaintext exactly once); GET / PATCH
+  ({name, disabled, limit}; disabled:true revokes, terminal) / DELETE
+  /api/v1/keys/{hash} where {hash} is the key's hash field (its uuid id), never
+  the secret. On list/CRUD resources usage and limit_remaining are null today
+  (real per-key spend: GET /api/v1/key or /api/v1/usage?api_key_id=).
+- Key-per-customer is the alternative to safety_identifier attribution:
+  independent revocation and per-customer daily caps; the two combine.
+- Identities (spend buckets, one per team or purpose) are set up with the
+  same provisioning key, the routes an org admin would otherwise click through
+  on https://platform.experientiallabs.ai/api-keys. What that key can call: GET /api/whoami; GET, POST /api/orgs/{org_id}/identities; PATCH /api/orgs/{org_id}/identities/{identity_id} (display_name and description only); GET, POST /api/v1/keys; GET, PATCH, DELETE /api/v1/keys/{hash}; GET, PUT /api/orgs/{org_id}/budgets; DELETE /api/orgs/{org_id}/budgets/{budget_id} (identity- and key-scope budgets this key created); GET /api/orgs/{org_id}/usage/by-identity.
+  POST identities takes {display_name, identity_id?, description?}; identity_id
+  matches ^[a-z][a-z0-9]*([._-][a-z0-9]+)*$, never starts with "org-", and is
+  unique PLATFORM-wide (a global primary key): 201 created; 409 code
+  identity_id_unavailable = it already exists, yours or any org's (the
+  response never says which): reuse it if it is in your own list, else retry
+  with details.suggested_id. PATCH takes {display_name?,
+  description?} only; a key sending active gets 403; enabling/disabling is
+  the admin's. POST /api/v1/keys with identity_id (200; one inference key per
+  identity; 404 unknown or foreign identity, 409 disabled; every KeyResource
+  reports identity_id). PUT budgets {period:"*"|"YYYY-MM",
+  scope_kind:"identity"|"key", identity_id|api_key_id, limit_nano_usd}; $1 =
+  1000000000; 0 is a HARD $0 cap, never "no cap"; a key may set only those two
+  scopes (422 otherwise), never the default identity's (403), and may replace
+  or delete only budgets it created (rows carry created_by_kind /
+  created_by_api_key_id; an admin's row answers 403 "set by an
+  administrator"). GET budgets takes the calendar month, never "*". GET
+  usage/by-identity?window=24h|7d|30d -> {identities:[{identity_id,
+  display_name, active, keys:[{api_key_id, key_label, request_count}],
+  totals, last_used_at}]}; only keys that carried traffic are listed, the
+  identity_id null row is a deleted key's traffic, and a key minted without
+  a group folds under the identity the mint assigned (usually Default). A
+  negative key limit on POST /api/v1/keys is a 400 {"error"}, and nothing is
+  minted. org_id is GET
+  /api/whoami's. An inference key gets 403 "A provisioning key is required for
+  this action" on all of them; another org's id 404s; a route not listed
+  (identity DELETE, grants) answers 401 to every key: the edge, not the key.
+  Business refusals carry {"error"}; request-shape failures carry FastAPI's
+  {"detail":[{loc,msg,type}]} and detail[0].loc[-1] names the field. The API
+  does not itself stop a provisioning key from serving inference or minting
+  another provisioning key; keep those as the admin's rules. The paste-able
+  prompt is "Set up identities with a provisioning key" under Setup prompts.
+
+## Coding agents (Claude Code, Conductor, Codex, OpenCode, Hermes Agent, Pi,
+## Cline, VS Code Copilot, Cursor, and any OpenAI-compatible tool)
+
+Any coding agent that can target an OpenAI-compatible endpoint works against
+this gateway: set its base URL to https://api.experientiallabs.ai/v1, supply an xpl_ key as the Bearer
+token, and name models by slug (from GET https://api.experientiallabs.ai/v1/models). Tools that read
+the standard OpenAI SDK environment variables need only:
+  export OPENAI_BASE_URL="https://api.experientiallabs.ai/v1"
+  export OPENAI_API_KEY="xpl_..."
+The variables must be EXPORTED: a plain KEY=... line in a shell file is
+invisible to child processes (the tool errors "Missing environment variable"
+while echo $KEY looks fine in the same shell).
+Claude Code connects through the Anthropic Messages lane:
+  export ANTHROPIC_BASE_URL="https://api.experientiallabs.ai"
+  export ANTHROPIC_API_KEY="xpl_..."
+  export ANTHROPIC_MODEL="<slug>"
+Use ANTHROPIC_API_KEY, never ANTHROPIC_AUTH_TOKEN: an existing claude.ai
+sign-in can outrank AUTH_TOKEN and send the gateway an OAuth token (a 401).
+Claude Code's startup connectivity probe, a keyless HEAD https://api.experientiallabs.ai/api/hello,
+answers 200 exactly as api.anthropic.com does; it is not a request and needs
+no key, so a session pointed at the gateway logs no failed probe.
+Claude Code reads auth at startup, so start a new session after switching
+(claude --resume <session id> keeps the conversation). Slugs are the dot
+form (claude-fable-5.1); Anthropic's dashed wire ids (claude-fable-5-1)
+answer 403 model_not_granted. Any catalog slug works as the model, not just
+Claude: gpt-6-astra and gpt-5.6-sol run with no extra variables (thinking
+translates to reasoning effort, tool errors fold, images work). The [1m]
+model suffix (ANTHROPIC_MODEL="<slug>[1m]") runs the 1M-token context
+window on models that serve one. Claude Code assumes a 200k window for a
+model it does not recognize and compacts early: set
+CLAUDE_CODE_MAX_CONTEXT_TOKENS to the model's max_input_tokens from
+GET https://api.experientiallabs.ai/api/models/<slug>, rounded down (gpt-6-astra:
+900000), NEVER to context_window: on most models (every
+maker but Anthropic and Gemini) that is a total window the provider counts the
+model's maximum output inside, so a session pinned to it never compacts before the
+provider refuses it and /compact then fails the same way (max_input_tokens
+already accounts for this per maker). Its /model picker may not list every gateway model (2.1.263 hides
+Fable on API-key auth): set "model": "<slug>" in the config dir's
+settings.json, or pass --model. "Not logged in · Please run /login" means
+Claude Code found no usable key, not that the gateway refused: either the
+key changed under a running session (restart with --resume), or you answered
+No to its "Detected a custom API key... use it?" prompt, which it remembers
+in <config dir>/.claude.json under customApiKeyResponses.rejected (answer
+Yes, or delete that entry). Never run /login on a gateway setup: it starts
+an Anthropic OAuth login that overrides the gateway. Claude Code hides the
+body of a 401 (it shows only its own login prompt) but prints 403 bodies
+verbatim.
+Conductor (parallel Claude Code agents) injects the env it captured from
+your login shell plus its own settings into every agent, and passes the
+per-chat picker choice as --model, so remap a picker alias only with
+ANTHROPIC_DEFAULT_*_MODEL (ANTHROPIC_MODEL does not apply to picker
+selections). Recommended per-repo placement: base URL + picker remaps
+committed in the repo's .claude/settings.json env block (it overrides
+anything captured from the shell), with only the key machine-local in
+.conductor/settings.local.toml under [environment_variables]
+(git-ignored). App-wide instead: the same variables in Settings ->
+Environment, with Settings -> Harnesses -> Claude Code on the API key,
+not a claude.ai CLI login. The key in ANTHROPIC_API_KEY also stops Claude
+Code from authenticating with Anthropic directly; settings reach newly
+created workspaces, not running ones.
+Codex targets the Responses API. In ~/.codex/config.toml:
+  model = "<slug>"
+  model_provider = "explabs"
+  [model_providers.explabs]
+  name = "Experiential Labs"
+  base_url = "https://api.experientiallabs.ai/v1"
+  env_key = "EXPLABS_API_KEY"
+  wire_api = "responses"
+Export EXPLABS_API_KEY (the xpl_ key) in the shell that launches Codex, and
+leave requires_openai_auth unset: setting it forces a ChatGPT login instead
+of your gateway key. Codex rides the Responses WebSocket transport when the
+deployment serves it and falls back to HTTP on 426 by itself.
+Prove any lane in isolation before touching real config (and again when
+rotating a key), and exercise the REAL tool surface: agents send every
+MCP/plugin tool schema with each request, and tool schemas are where
+gateway/provider strictness differences bite, so a bare hello can pass
+while the first real session fails. The pass criterion is a session that
+completes with tools listed and one real tool round-trip. Codex: copy
+~/.codex into CODEX_HOME=$(mktemp -d) (real mcp_servers ride the test) and
+run one tool-using prompt; Claude Code: an env-prefixed one-shot
+(claude -p) from a project with MCP servers and plugins enabled, asking it
+to list tools and read a file. Cheapest key-only pre-flight: GET /v1/models
+plus one tiny completion. Rotate keys new-first: mint the new key, verify
+it with the isolated tool-exercising test, swap it into the config, THEN
+revoke the old one. Never revoke or overwrite before the replacement is
+proven.
+Hermes Agent (Nous Research) takes a named custom provider in
+~/.hermes/config.yaml: providers.explabs with base_url https://api.experientiallabs.ai/v1,
+key_env EXPLABS_API_KEY, api_mode chat_completions, plus
+model: {provider: "custom:explabs", default: "<slug>"} and the key line
+EXPLABS_API_KEY=xpl_... in ~/.hermes/.env. /model custom:explabs:<slug>
+switches mid-session; hermes -z "..." runs a headless one-shot smoke. Its
+session-title side call sends temperature, so sampling-pinned models fall
+back to a default title (the session itself is unaffected).
+Pi (pi.dev) takes a named custom provider in ~/.pi/agent/models.json:
+providers.explabs with baseUrl https://api.experientiallabs.ai/v1, api "openai-completions", apiKey
+"$EXPLABS_API_KEY" (pi interpolates the env var at request time, never
+write the raw key into the file), and one models[] entry per slug with
+reasoning/input/contextWindow/maxTokens from the catalog. Select with
+--provider explabs --model <slug> at launch or /model in-session (the file
+reloads each time /model opens); pi -p "..." runs a headless one-shot.
+VS Code Copilot Chat (BYOK is VS Code core since 1.122; chat/agent mode
+needs no Copilot plan): add a "customendpoint" entry to the user profile's
+chatLanguageModels.json: apiType "chat-completions", per-model url
+https://api.experientiallabs.ai/v1/chat/completions, toolCalling/vision matching the slug's catalog
+capabilities, and modelOptions {"temperature": null, "top_p": null} (null
+deletes the field; Copilot's defaults 400 on sampling-pinned models). Enter
+the key via the Chat model picker's Manage Models (right-click the model):
+VS Code stores it encrypted and writes the input references itself.
+Cursor (paid plans only: the Free plan serves only Auto and refuses named
+models, which custom models are) takes the same pair in its settings UI:
+Cursor Settings -> Models ->
+API Keys -> "OpenAI API Key" = the xpl_ key, "Override OpenAI Base URL" =
+https://api.experientiallabs.ai/v1, then add catalog slugs as custom model names. Cursor relays every
+request through its own servers and keeps Tab completion on its own models;
+if it sends a sampling value a model's route pins, the request answers
+400 invalid_parameter naming the field (see the error table above). Use a
+different slug there.
+Verified per-agent configs (Claude Code, OpenAI Codex CLI over the Responses
+API, OpenCode, Hermes Agent, Pi, Cline, VS Code Copilot Chat, Cursor) are
+maintained at
+https://platform.experientiallabs.ai/docs/coding-agents.
+
+## Self-hosted CLI
+
+Self-hosters run the open-source Experiential gateway from the terminal with
+"exp run". The hosted platform manages the catalog, keys, and usage for you in
+the web app.
+
+## Typical agent flow
+
+1. A human signs in and mints an API key at https://platform.experientiallabs.ai/settings/api-keys, and (for
+   the pass-through lane) connects provider keys at https://platform.experientiallabs.ai/settings.
+2. The agent receives the key. It calls GET https://api.experientiallabs.ai/v1/models to see callable
+   slugs.
+3. The agent calls POST https://api.experientiallabs.ai/v1/chat/completions (or /v1/responses) with
+   model="<slug>" exactly as it would call OpenAI, streaming or not.
+4. The agent reads scoped financial usage through
+   POST https://api.experientiallabs.ai/api/orgs/<org_id>/spend/query; humans explore the same dimensions
+   at https://platform.experientiallabs.ai/spend, inspect requests at https://platform.experientiallabs.ai/logs, and manage credits at
+   https://platform.experientiallabs.ai/credits.
+
+## Setup prompts (paste one into a coding agent; it does the setup for you)
+
+These are the same first-person prompts the web app's onboarding uses, with this
+deployment's URLs already filled in. A human pastes one into a CLI coding agent;
+the agent follows it literally. Human-readable copies: https://platform.experientiallabs.ai/docs/setup-prompts.
+Shareable source copies: https://github.com/experientiallabs/setup-prompts.
+
+### Create an account from your coding agent
+Signed out? Paste this into a CLI agent to create your account instantly from your email, wire the gateway, and confirm the key.
+
+1. Ask me for my email address. Ask me
+   directly ("What's your email? I'll create your Experiential Labs account
+   with it.") and wait for my answer. Use exactly the address I give you.
+   Never invent or guess an address, and never go looking for one in my
+   files, git config, or shell history. Call the result MY_EMAIL.
+   Show me the Terms (https://platform.experientiallabs.ai/terms) and Privacy (https://platform.experientiallabs.ai/privacy)
+   links and ask whether I agree to the terms and privacy conditions.
+   Wait for my affirmative answer before creating an account. Do not infer agreement.
+
+2. Create my account instantly, no browser, no password, no code.
+   POST https://platform.experientiallabs.ai/api/signup/instant   (no auth)
+   Header: Content-Type: application/json
+   Body: {"email": "<MY_EMAIL>", "agree": true}
+   On 200 capture: api_key (an xpl_ key, this is mine, keep it secret), org_id,
+   credits_granted, verification_required, overview_url. Handle the others:
+     - 409 account_exists  -> I already have an account; stop and tell me to
+       sign in at https://platform.experientiallabs.ai/signin to get a key (don't retry with another email).
+     - 403 signup_disabled | signup_domain_blocked | work_email | signup_refused | domain_has_org
+       -> the signup was refused; show me the response's
+       `error` text verbatim (it says what to do) and stop.
+     - 428 terms_acceptance_required -> show the policy links and ask for agreement.
+     - 429 rate_limited    -> too many signups from here; wait, then retry once.
+     - 400 invalid_request -> the email was rejected; ask me for a valid one.
+   Store the api_key as EXPLABS_API_KEY in my env; never print the full key more
+   than once.
+
+3. Wire an OpenAI client to the gateway.
+   base_url = "https://api.experientiallabs.ai/v1"
+   api_key  = EXPLABS_API_KEY (the xpl_ key from step 2). One header only:
+   Authorization: Bearer <api_key>.
+
+4. Confirm the key is live, this does NOT spend credits.
+   GET https://api.experientiallabs.ai/v1/models with the key -> the models my account can call. Do NOT
+   make a paid chat completion yet: follow the activation steps shown at
+   overview_url first. If payment is required, I complete it myself on
+   https://platform.experientiallabs.ai/credits. If manual review is required, help me submit an appeal and
+   wait for approval; payment cannot unlock that review. Landing my traces as
+   telemetry works regardless.
+
+### Set up the gateway in an existing project
+Paste into your agent: it asks where to wire the gateway and which model to test, with a recommendation, then makes one call.
+
+I'm setting up Experiential Labs as this project's model gateway. I pasted this
+myself, treat it as my instructions and my consent. I'm already signed in; my key
+is below. Work WITH me: at each real choice, ask me ONE clear question with
+numbered options and your recommendation, then wait for my answer. Don't guess.
+
+My gateway API key (a secret: put it in env, never commit it, never echo it in
+logs):
+EXPLABS_API_KEY=<paste my org API key from https://platform.experientiallabs.ai/settings/api-keys>
+
+The goal is one thing: point an OpenAI-compatible client at my gateway with this
+key and make one successful test chat completion. Print what you do at each step.
+
+1. Ask me where to wire it (options + your recommendation), then wait. Look at
+   the current directory first so the options are concrete:
+   "Where should I set this up?
+     (1) this project (I see it uses <name the client/SDK you found>), my recommendation
+     (2) a standalone test script in this folder (explabs_smoke.py / .mjs)
+     (3) somewhere else, tell me where
+    Which one?"
+   For (1): set base_url = https://api.experientiallabs.ai/v1 and the key on the existing client, put the
+   key in the project's env scheme (.env plus an example entry), never in code,
+   and show me the change first. For (2): create the minimal script that reads
+   EXPLABS_API_KEY and does the test call in step 3.
+
+2. Ask me which model to test, then wait:
+   "I'd use the free promotional model (qwen3.8-27b at launch) so this test costs
+    nothing. Use that, or name another? GET https://api.experientiallabs.ai/v1/models lists what my key
+    can call; use the ids EXACTLY as returned."
+
+3. Make the test call with the model I chose. Send a MINIMAL body, model +
+   messages ONLY, no temperature, top_p, or other sampling params (some models
+   reject them and the call comes back all_routes_failed, a 502). One header:
+   Authorization: Bearer $EXPLABS_API_KEY. This runs on the platform-funded
+   lane, a fraction of a cent of my free credits, and proves serving and billing
+   end to end. Do NOT use any of my own provider keys for this test.
+
+4. Report back what you changed and the test call (the model, that it succeeded,
+   and its cost). Then ask me which optional follow-ups I want, with your
+   recommendation, and do only the ones I pick:
+     (a) Connect my own provider keys (BYOK, Pro) so those calls bill my own accounts
+     (b) Import my Claude Code / Codex usage history (metadata only)
+     (c) Review my credits and spend
+   BYOK and import are quick for me to do at https://platform.experientiallabs.ai/settings; balances live at
+   https://platform.experientiallabs.ai/credits.
+
+Read the contract if you build further: https://platform.experientiallabs.ai/docs (human docs) and
+https://platform.experientiallabs.ai/llms.txt (machine-readable: honored and refused parameters, error codes,
+streaming caveats). Follow it literally.
+
+### Wire your coding agent to the gateway
+Paste into Claude Code, Codex, OpenCode, Hermes Agent, Pi, Cline, VS Code Copilot, Conductor, Cursor, or any OpenAI-SDK tool: the agent identifies itself and applies its own verified integration.
+
+I pasted this into you myself, wire THIS coding agent up to my Experiential
+Labs gateway, so my model calls route through https://api.experientiallabs.ai and show up in my usage.
+
+Ground rules: never print my full key (first 8 characters at most), ask me
+before you edit any config file or shell profile, and if you cannot do a step
+(no file access, settings live in a GUI), print the exact manual steps for me
+instead. Print what you're doing at each step.
+
+1. Get my key. Use EXPLABS_API_KEY from my environment if it is set; otherwise
+   ask me to paste one (I can mint it at https://platform.experientiallabs.ai/settings/api-keys). It looks
+   like xpl_ followed by 40 hex characters.
+
+2. Prove the key works before touching any config:
+   GET https://api.experientiallabs.ai/v1/models with header "Authorization: Bearer <key>" -> 200 and
+   the model slugs I can call. Remember the list; I'll pick models from it.
+
+3. Identify which agent you are and apply YOUR integration:
+
+   - Claude Code:
+     You cannot repoint yourself mid-session, and switching auth under a running
+     session causes mixed-state errors. First prove the lane without touching any
+     config, via one isolated subprocess run from this project (so my MCP servers
+     and plugins load and their tool schemas ride the request. Tool schemas are
+     where provider strictness bites, so a bare hello proves too little):
+       ANTHROPIC_BASE_URL="https://api.experientiallabs.ai" ANTHROPIC_API_KEY="<my key>" \
+         ANTHROPIC_MODEL="<slug I pick>" \
+         claude -p "list your available tools, then read ./README.md and reply
+         with its first heading"
+     Pass only if that run completes with tools listed and a real tool use.
+     Then offer me two placements and apply the one I pick:
+     (a) append to my shell profile, or (b) print for one-off use:
+       export ANTHROPIC_BASE_URL="https://api.experientiallabs.ai"        # no /v1 suffix
+       export ANTHROPIC_API_KEY="<my key>"
+       export ANTHROPIC_MODEL="<slug I pick>"
+     Use ANTHROPIC_API_KEY, never ANTHROPIC_AUTH_TOKEN: an existing claude.ai
+     sign-in can outrank AUTH_TOKEN and send the gateway an OAuth token instead.
+     Then tell me to start a NEW session from a shell with those set. Name the
+     model by its gateway slug exactly as GET https://api.experientiallabs.ai/v1/models lists it (the DOT
+     form, e.g. claude-fable-5.1; Anthropic's dashed ids like claude-fable-5-1
+     answer 403 model_not_granted). If the slug is not an Anthropic model, also
+     export CLAUDE_CODE_MAX_CONTEXT_TOKENS=<max_input_tokens from
+     GET https://api.experientiallabs.ai/api/models/<slug>, rounded down to the nearest 50k>. Claude Code
+     assumes 200k for names it does not know and compacts early. NEVER use
+     context_window for that pin: on most models (every maker but Anthropic and
+     Gemini) it is a total window the provider counts the model's maximum output
+     inside, so a session pinned to it never compacts before the provider refuses
+     it and /compact then fails the same way. max_input_tokens already accounts for this per maker, so it is
+     always the right pin. Warn me plainly: if a session ever shows
+     "Not logged in · Please run /login", do NOT run /login (it starts Anthropic
+     OAuth that overrides the gateway). Restart with --resume, and if it
+     persists, my <config dir>/.claude.json remembers a "No" to the custom-API-key
+     prompt under customApiKeyResponses.rejected: answer Yes or move the entry to
+     approved. Images work on image-capable routes and are rejected by name on
+     text-only ones; extended thinking passes through on all-Anthropic routes
+     and is translated to reasoning effort elsewhere.
+
+   - Conductor:
+     Conductor launches Claude Code with the environment it captured from my
+     login shell (interactive login shell, cached per workspace) merged with its
+     own settings, and passes the per-chat picker choice as --model, so the
+     model is routed by remapping picker aliases with ANTHROPIC_DEFAULT_*_MODEL
+     variables (ANTHROPIC_MODEL does not apply to picker selections). Offer me
+     two placements and apply the one I pick:
+     (a) per-repo, recommended: merge into this repo's .claude/settings.json
+     "env" block (committed; Claude Code applies it in every workspace, and it
+     overrides anything Conductor captured from my shell), one
+     ANTHROPIC_DEFAULT_<ALIAS>_MODEL entry per picker alias I use:
+       { "env": { "ANTHROPIC_BASE_URL": "https://api.experientiallabs.ai",
+                  "ANTHROPIC_DEFAULT_OPUS_MODEL": "<slug I pick>" } }
+     then put ONLY the key machine-local in .conductor/settings.local.toml
+     under [environment_variables] (make sure that file is
+     git-ignored before writing my key into it):
+       ANTHROPIC_API_KEY = "<my key>"
+     (b) app-wide: print the same variables for me to add by hand in
+     Conductor -> Settings -> Environment, and remind me to check that
+     Settings -> Harnesses -> Claude Code uses my API key, not a claude.ai
+     CLI login.
+     Warn me either way: settings reach newly created workspaces, not running
+     ones, and if my shell profile exports a direct Anthropic
+     ANTHROPIC_API_KEY, Conductor's capture hands it to every agent;
+     placement (a) overrides it; otherwise I should remove the export.
+     The key rides ANTHROPIC_API_KEY, never ANTHROPIC_AUTH_TOKEN: an existing
+     claude.ai sign-in can outrank AUTH_TOKEN, and a set API key also stops
+     Claude Code from trying to authenticate with Anthropic directly.
+
+   - OpenAI Codex CLI:
+     First prove the lane in a throwaway home so my real ~/.codex (config,
+     sessions, auth) stays untouched, and test with my REAL tool surface: you
+     send every mcp_servers/plugin tool schema on each request, and tool schemas
+     are where provider strictness bites, so a bare hello proves too little.
+     Copy ~/.codex into a fresh "$(mktemp -d)", append ONLY the
+     [model_providers.explabs] table below to that copy's config.toml, then run
+       CODEX_HOME=<that dir> codex exec -m "<slug I pick>" \
+         -c model_provider=explabs -c model_reasoning_effort=max \
+         "list your available tools, then read ./README.md and reply with its
+         first heading"
+     Pass only if it completes with my MCP/plugin tools listed and a real tool
+     use. Then add the whole block to ~/.codex/config.toml (create it if
+     missing, show me the diff before writing) and tell me to start a new Codex
+     session:
+       model = "<slug I pick>"
+       model_provider = "explabs"
+       model_reasoning_effort = "max"   # reasoning models; "max" is the top tier
+       [model_providers.explabs]
+       name = "Experiential Labs"
+       base_url = "https://api.experientiallabs.ai/v1"
+       env_key = "EXPLABS_API_KEY"
+       wire_api = "responses"
+     Leave requires_openai_auth unset, and make sure EXPLABS_API_KEY is exported
+     where I launch you (export KEY=..., a plain KEY=... line is invisible to
+     child processes like me).
+
+   - OpenCode:
+     Write the provider block into this project's opencode.json (or
+     ~/.config/opencode/opencode.json if I prefer global, ask):
+       {"provider": {"explabs": {"npm": "@ai-sdk/openai-compatible",
+        "name": "Experiential Labs",
+        "options": {"baseURL": "https://api.experientiallabs.ai/v1", "apiKey": "{env:EXPLABS_API_KEY}"},
+        "models": {"<slug>": {"name": "<slug>"}}}}
+     Set each model's "name" to its slug exactly. OpenCode shows that name in its
+     status bar, so never put prices, discounts or promotion notes in it: they go
+     stale, and promotions are applied at billing, not by this config.
+     Fill limit.context/limit.output and cost ({"input": $/1M, "output": $/1M},
+     i.e. *_nano_usd_per_million / 1000000000 of the providers entry whose id is
+     the position-0 default_waterfall model_provider_id) for each slug from
+     GET https://api.experientiallabs.ai/api/models/<slug> so my context window and spend display are right.
+
+   - Hermes Agent (Nous Research):
+     First prove the lane in a throwaway data dir so my real ~/.hermes (config,
+     sessions, memories) stays untouched: create "$(mktemp -d)", write ONLY the
+     config below plus a .env line EXPLABS_API_KEY=<my key> (chmod 600) into it,
+     then run
+       HERMES_HOME=<that dir> hermes -z "list your available tools, then read
+       ./README.md and reply with its first heading"
+     Pass only if that run completes with tools listed and a real tool
+     round-trip. Then merge the same block into ~/.hermes/config.yaml (show me
+     the diff before writing) and put the key line in ~/.hermes/.env:
+       providers:
+         explabs:
+           base_url: "https://api.experientiallabs.ai/v1"
+           key_env: "EXPLABS_API_KEY"
+           api_mode: chat_completions
+       model:
+         provider: "custom:explabs"
+         default: "<slug I pick>"
+     Any catalog slug works as the default, and /model custom:explabs:<slug>
+     switches mid-session. Warn me plainly: Hermes' session-title side call
+     sends a temperature value, so on models that pin their sampling the title
+     falls back to a default; the session itself is unaffected.
+
+   - Pi:
+     First prove the lane in a throwaway home so my real ~/.pi (auth, sessions,
+     model store) stays untouched: pi resolves its agent dir from HOME, so create
+     "$(mktemp -d)" and copy my real ~/.pi into it (extensions, skills and
+     settings ride the test; tool schemas are where provider strictness bites,
+     so a defaults-only run proves too little; if ~/.pi does not exist yet, just
+     create <that dir>/.pi/agent). Then merge the block below into that copy's
+     .pi/agent/models.json and run
+       HOME=<that dir> EXPLABS_API_KEY=<my key> pi -p --provider explabs \
+         --model "<slug I pick>" "list your available tools, then read
+         ./README.md and reply with its first heading"
+     Pass only if that run completes with tools listed and a real tool
+     round-trip, then DELETE the throwaway home ("rm -rf <that dir>"). The copy
+     carries my auth and session state and must not outlive the proof. Then
+     merge the same provider into ~/.pi/agent/models.json
+     (create it as {"providers": {}} if missing; show me the diff before
+     writing):
+       { "providers": { "explabs": {
+           "baseUrl": "https://api.experientiallabs.ai/v1",
+           "api": "openai-completions",
+           "apiKey": "$EXPLABS_API_KEY",
+           "models": [ { "id": "<slug I pick>", "name": "<slug I pick>",
+             "reasoning": true, "input": ["text", "image"],
+             "contextWindow": <from GET https://api.experientiallabs.ai/api/models/<slug>>,
+             "maxTokens": <from the same> } ] } } }
+     The apiKey stays the literal string "$EXPLABS_API_KEY"; pi interpolates it
+     from my environment, so make sure the variable is exported where I launch
+     pi and never write the raw key into the file. Set reasoning/input to the
+     slug's actual catalog capabilities. Any catalog slug works; I pick models
+     with --model at launch or /model in-session (models.json reloads each time
+     /model opens, no restart).
+
+   - Cline:
+     Your settings live in the VS Code UI, so print these for me to set by hand:
+     API Provider "OpenAI Compatible"; Base URL https://api.experientiallabs.ai/v1; API Key = my key (no
+     Bearer prefix); Model ID = a slug from step 2; and per-model context window /
+     max output tokens from https://api.experientiallabs.ai/api/models/<slug>.
+
+   - VS Code (Copilot Chat):
+     Copilot's bring-your-own-model support is VS Code core (1.122+); chat and
+     agent mode need no Copilot plan. Find my VS Code user dir (macOS
+     ~/Library/Application Support/Code/User, Linux ~/.config/Code/User, Windows
+     %APPDATA%\Code\User) and merge this entry into chatLanguageModels.json
+     there (create the file as a JSON array if missing), one models[] item per
+     slug I pick:
+       { "name": "Experiential Labs", "vendor": "customendpoint",
+         "apiType": "chat-completions",
+         "models": [ { "id": "<slug I pick>", "name": "<slug I pick>",
+           "url": "https://api.experientiallabs.ai/v1/chat/completions",
+           "toolCalling": true, "vision": true,
+           "modelOptions": { "temperature": null, "top_p": null } } ] }
+     Set toolCalling and vision to each slug's ACTUAL capabilities from
+     GET https://api.experientiallabs.ai/api/models/<slug> (tool support and image input). Declaring a
+     capability the model lacks makes Copilot send tool calls or images the
+     route rejects.
+     The null modelOptions are required, not decoration: null deletes the field,
+     and Copilot otherwise sends temperature 0.1 and top_p 1 on every request,
+     which models that pin their sampling reject with a 400 naming the
+     parameter. You cannot enter my key (it lives in VS Code's encrypted secret
+     storage), so print the manual step: in the Chat model picker open Manage
+     Models, right-click the Experiential Labs model, choose to enter an API
+     key, and paste my key (<my key>). VS Code stores it encrypted and writes
+     the ${input:chat.lm.secret.*} references into the entry itself; never
+     hand-write a raw key into the file.
+
+   - Cursor:
+     Your gateway settings live in the Cursor Settings UI, so print these for me
+     to set by hand. First tell me the prerequisite: a paid Cursor plan (the Free
+     plan serves only Auto and refuses named models, which custom models are).
+     Then: in Cursor Settings -> Models -> API Keys, put my key in
+     "OpenAI API Key" (no Bearer prefix), enable "Override OpenAI Base URL" and
+     set it to https://api.experientiallabs.ai/v1. Add each slug I pick as a custom model
+     name in the models list; custom models ride the override in OpenAI format,
+     so any catalog slug works. Warn me plainly: Cursor relays requests through
+     its own servers, Tab autocomplete stays on Cursor's models, and if a chat
+     answers 400 invalid_parameter naming temperature or top_p, that model pins
+     its sampling (the Claude 5 family pins temperature to 1). Pick a
+     different slug.
+
+   - Any other OpenAI-compatible tool:
+     Export OPENAI_BASE_URL="https://api.experientiallabs.ai/v1" and OPENAI_API_KEY="<my key>" wherever I
+     launch you, and name models by slug. If your own config wants the values
+     instead, it needs the same three: base URL https://api.experientiallabs.ai/v1, my key, and a slug.
+
+4. Verify end to end. Make one tiny completion with the surface you configured
+   ("reply with the single word: ok", small max output), via your own next
+   model call if you now route through the gateway, otherwise via curl with my
+   key. Then tell me it landed and that I can watch every call at
+   https://platform.experientiallabs.ai/telemetry.
+
+5. Recap exactly what you changed (files and values, key shown as xpl_ prefix
+   only) so I can undo it later.
+
+### Set up identities with a provisioning key
+Org admins: paste into your agent with a provisioning key and it creates your identities (coding, product, ...) with one inference key each, so spend buckets per identity.
+
+Set up per-identity API keys for my Experiential Labs organization so
+spend is bucketed per identity (for example "coding" vs "product") in usage.
+
+Provisioning key: xpl_<paste-your-provisioning-key-here>
+(I replace the placeholder above before sending. It is a PROVISIONING key:
+it can manage this org's keys, identities, and budgets. Never print it back
+to me, never write it into any file, and do not use it for inference. The
+API does not stop you from doing those; these are my rules.)
+
+Base URLs: API https://api.experientiallabs.ai (management under /api, inference under /v1),
+dashboard https://platform.experientiallabs.ai. Every call below sends
+  Authorization: Bearer <the provisioning key>
+plus Content-Type: application/json on writes. On a non-2xx read the JSON
+"error" field; a body with "detail" instead is a request-shape failure and
+detail[0].loc[-1] names the offending field. Then apply the Fallbacks.
+What this key can call: GET /api/whoami; GET, POST /api/orgs/{org_id}/identities; PATCH /api/orgs/{org_id}/identities/{identity_id} (display_name and description only); GET, POST /api/v1/keys; GET, PATCH, DELETE /api/v1/keys/{hash}; GET, PUT /api/orgs/{org_id}/budgets; DELETE /api/orgs/{org_id}/budgets/{budget_id} (identity- and key-scope budgets this key created); GET /api/orgs/{org_id}/usage/by-identity.
+Disabling an identity, model grants, org-wide budgets, the default identity's
+budget, and any budget an admin set are the admin's, on https://platform.experientiallabs.ai/api-keys; if a
+step needs one of those, ask me instead.
+
+1. Discover the organization (reads only).
+   GET https://api.experientiallabs.ai/api/whoami -> {org_id, org_slug, org_name}. Keep org_id; every
+   /api/orgs/{org_id}/... call below uses it. Then
+   GET https://api.experientiallabs.ai/api/orgs/{org_id}/identities -> {identities: [{identity_id,
+   display_name, active, is_default, ...}]}. The is_default row is the org's
+   own identity: leave it alone, mint no keys under it, cap nothing on it.
+
+2. Intake, BEFORE any change. Do not send a single POST, PUT, PATCH, or
+   DELETE until I have answered these and said yes to the plan. Ask me, in
+   my words, skipping any question my message already answers:
+   - What identities do I want? Identities are spend buckets, usually one per
+     team, product, or agent. Ask: "Do you have more than one product?
+     Which teams or agents will call the API?" Offer these as a starting
+     point, and take my renames, drops, and additions:
+       coding   - IDE and terminal coding agents
+       product  - the product's own inference traffic
+       research - experiments, evals, notebooks
+   - Does each identity need its own inference key, and which tool or
+     service will hold it (Claude Code, Codex, a server, ...)? One key per
+     identity is the default; say so and let me change it.
+   - Do I want a spend budget per identity? If yes: how much (USD) and for
+     what period, monthly recurring or one calendar month, on the identity
+     or on its key. If I have no number, propose none: no budget means no cap.
+   Then show me the plan as ONE table: identity_id, display name, purpose,
+   key name and the tool it goes to (or "no key"), budget (amount + period,
+   or "none"). Wait for my explicit "yes". Anything else is an edit: apply it
+   and show the table again. The first write happens only after that yes.
+
+3. Create each identity (reuse one that exists).
+   POST https://api.experientiallabs.ai/api/orgs/{org_id}/identities
+     {"display_name": "Coding", "identity_id": "coding", "description": "<one line>"}
+   201 -> created. 409 (code identity_id_unavailable) -> the id already
+   exists: if it is in MY list from step 1, reuse that identity; otherwise
+   (ids are unique platform-wide, and only need to be unique to my tooling)
+   retry ONCE with details.suggested_id from that response. identity_id
+   starts with a letter, continues with lowercase letters or digits, groups
+   joined by ".", "-" or "_", and never starts with "org-". If step 1 listed
+   the identity with active=false, do not use it: an admin disabled it on
+   purpose and only the dashboard re-enables it. Tell me and pick another.
+
+4. Mint the inference keys the plan names (one per identity by default).
+   POST https://api.experientiallabs.ai/api/v1/keys
+     {"name": "<identity>-<tool>", "identity_id": "<identity_id>"}
+   200 -> {data: {hash, name, identity_id, ...}, key: "xpl_..."}. The plaintext
+   appears exactly once; hold it only until step 6. Never set "provisioning":
+   true on these keys (the API would allow it; I do not). Check
+   data.identity_id matches. An optional DAILY USD cap: "limit": 5 in the body.
+
+5. Budgets, only where the plan has one, in nano-USD ($1 = 1000000000).
+   "period": "*" recurs every month; "period": "YYYY-MM" caps that one
+   calendar month only. 0 is a HARD $0 cap, never "no cap"; remove one with
+   DELETE https://api.experientiallabs.ai/api/orgs/{org_id}/budgets/{budget_id}. Replace or delete only
+   budgets this key created (an admin's row is 403). Never the default identity's.
+   PUT https://api.experientiallabs.ai/api/orgs/{org_id}/budgets
+     {"period": "*", "scope_kind": "identity", "identity_id": "coding",
+      "limit_nano_usd": 50000000000}          # $50 every month for the identity
+     {"period": "*", "scope_kind": "key", "api_key_id": "<data.hash>",
+      "limit_nano_usd": 20000000000}          # $20 every month for one key
+     {"period": "2026-10", "scope_kind": "identity", "identity_id": "coding",
+      "limit_nano_usd": 5000000000}           # $5 for October 2026 only
+   Only those two scope kinds are this key's to set. Read back with
+   the calendar month, never "*": GET https://api.experientiallabs.ai/api/orgs/{org_id}/budgets?period=YYYY-MM
+
+6. Hand me one table: identity -> key name -> where the key goes. Print each
+   new key exactly once, in that table, and nowhere else. Never commit a key;
+   prefer the OS keychain or a .env file that is gitignored. Per tool:
+     Claude Code:   export ANTHROPIC_BASE_URL="https://api.experientiallabs.ai"      (no /v1 suffix)
+                    export ANTHROPIC_API_KEY="<key>"
+                    export ANTHROPIC_MODEL="<slug from GET https://api.experientiallabs.ai/v1/models>"
+     Codex, Cline, Cursor, the OpenAI SDK, any OpenAI-compatible tool:
+                    export OPENAI_BASE_URL="https://api.experientiallabs.ai/v1"
+                    export OPENAI_API_KEY="<key>"
+     OpenCode:      a provider in opencode.json with
+                    "npm": "@ai-sdk/openai-compatible" and
+                    "options": {"baseURL": "https://api.experientiallabs.ai/v1", "apiKey": "{env:OPENAI_API_KEY}"}
+     A server:      the same OPENAI_* pair in its secret store. Per-tool
+                    steps: https://platform.experientiallabs.ai/docs/coding-agents.
+
+7. Verify every key with one request and show me where the spend lands.
+   GET https://api.experientiallabs.ai/v1/models (bearer required) for a slug, then
+   POST https://api.experientiallabs.ai/v1/chat/completions with Authorization: Bearer <that key>
+     {"model": "<slug>", "max_tokens": 5,
+      "messages": [{"role": "user", "content": "ping"}]}
+   Then, with the provisioning key,
+   GET https://api.experientiallabs.ai/api/orgs/{org_id}/usage/by-identity?window=30d and confirm each
+   identity row lists its key with a request_count (only keys that carried
+   traffic appear; a deleted key's traffic is the identity_id null row; keys
+   minted without a group fold under the Default row). https://platform.experientiallabs.ai/api-keys shows
+   per-key spend.
+
+Fallbacks:
+- 401 on a route in the list above: the key is wrong or revoked; ask me to
+  check the paste. 401 on a route NOT in that list is the edge refusing it to
+  every key, not a key problem: hand that step to me.
+- 403 "A provisioning key is required": my key is an inference key. Stop and
+  tell me to mint a provisioning key as an org admin on https://platform.experientiallabs.ai/api-keys
+  (Create key -> Configuration -> check Provisioning key -> Create
+  provisioning key). Any other 403 names what
+  this key may not do: hand that step to me.
+- 404 on an identity or budget path: that id does not exist in this org;
+  re-list and check the id. 404 on /api/orgs/{org_id} itself: org_id is not
+  this key's org; re-read it from https://api.experientiallabs.ai/api/whoami.
+- 409 on an identity: in my step-1 list -> reuse it; otherwise retry once
+  with details.suggested_id. 409 on a key mint: that identity is disabled;
+  tell me and use another one. Never try to re-enable it.
+- 422 with "error": the message names the rule (identity_id shape, scope
+  kinds, period). 422 with "detail": detail[0].loc[-1] names the field (a
+  missing display_name, a non-numeric limit, a budgets read without period).
+  A NEGATIVE key limit is a 400 with "error" instead; nothing is minted.
+- 429, or 503 "gateway is updating": wait Retry-After seconds (30 if absent)
+  and retry that call once. A key mint is not idempotent: list
+  GET https://api.experientiallabs.ai/api/v1/keys before minting again so no identity gets two keys.
+- 500 internal_error "cannot serve this request natively" on the verify
+  request: no serviceable lane for that model here. Try one other slug from
+  GET https://api.experientiallabs.ai/v1/models; if that fails the same way, stop and report it.
+- Never print the provisioning key, store a key in the repo, or paste keys
+  where I did not ask for them.
+
+### Switch from your current provider or gateway
+Paste into your coding agent: it finds the existing integration, moves the base URL and key, maps model ids against the live catalog, moves cost reads onto the Cost API, and verifies with one call.
+
+I'm replacing my current model provider or gateway with Experiential Labs as
+this project's model gateway. I pasted this myself: treat it as my instructions
+and my consent. Work WITH me: at each real choice, ask me ONE clear question
+with numbered options and your recommendation, then wait. Don't guess. Print
+what you do at each step, and never print my full API key (first 8 characters
+at most). Read the full machine-readable contract first: https://platform.experientiallabs.ai/llms.txt (base
+URLs, every route, honored and refused parameters, cost fields, error codes).
+Follow it literally.
+
+1. Find the current integration. Search this project for the provider's base
+   URL, its key variable, its SDK/client construction, hardcoded model ids,
+   provider-specific request fields (provider preferences, transforms,
+   fallback model lists, referer/title headers), and any code that reads cost
+   or usage from it. Show me the list of files and call sites before changing
+   anything.
+
+2. Get my Experiential key. Ask me: "Do you have an xpl_ key already?
+     (1) yes, I'll paste it
+     (2) no, create my account"
+   For (2): ask me for my email (never scavenge one from my files or git
+   config), show me https://platform.experientiallabs.ai/terms and https://platform.experientiallabs.ai/privacy and wait for my
+   agreement, then
+   POST https://platform.experientiallabs.ai/api/signup/instant   (no auth)
+   Header: Content-Type: application/json
+   Body: {"email": "<MY_EMAIL>", "agree": true}
+   On 200 capture api_key. On 409 account_exists tell me to sign in at
+   https://platform.experientiallabs.ai/signin for a key and stop. On any other error show me the response's
+   `error` text verbatim and stop.
+   Store the key as EXPLABS_API_KEY in my env scheme (.env plus an example
+   entry), never in code.
+
+3. Switch the base URL. The gateway keeps the path shapes my current
+   integration already uses:
+     base URL:  https://api.experientiallabs.ai/api/v1
+     auth:      Authorization: Bearer $EXPLABS_API_KEY   (the ONLY header needed)
+   POST /chat/completions, /responses, /messages (Anthropic Messages API) and
+   GET /models work unchanged. Plain OpenAI or Anthropic SDKs can also use the
+   bare base https://api.experientiallabs.ai/v1. Remove the provider-specific headers and request
+   fields from step 1: the gateway does provider routing (fallback, caching)
+   itself and unknown parameters may be rejected. Send model + messages and
+   only the parameters I actually rely on.
+
+4. Map model ids. GET https://api.experientiallabs.ai/api/v1/models with my key (free; this does not
+   spend credits) lists the slugs I can call. For each model id from step 1,
+   propose the matching slug (e.g. "claude-fable-5.1") and ask me to confirm
+   the mapping before replacing. Use slugs EXACTLY as returned.
+
+5. Move cost and usage reads over.
+   - Every chat/responses reply carries usage.cost (USD, what I was charged)
+     and usage.is_byok; on a stream it rides the final usage chunk. No flag
+     needed. Exception: a request sent with Idempotency-Key carries no
+     usage.cost at all (original or replay), so read the field as optional.
+   - One request: read the x-request-id response header and call
+     GET https://api.experientiallabs.ai/api/v1/generation?id=<that id>.
+   - Balance: GET https://api.experientiallabs.ai/api/v1/credits. Recent activity:
+     GET https://api.experientiallabs.ai/api/v1/activity.
+   - Billing feed: GET https://api.experientiallabs.ai/api/v1/usage is the settled per-request export
+     (cost_usd, estimated_cost_usd, real_cost_usd, tokens, attribution_label,
+     api_key_id), newest first inside a lookback window (24h|7d|30d); its
+     next_cursor pages OLDER within one call and is not a resume checkpoint.
+     Each run scans from the top and dedupes on the row id.
+   - If I rebill my own customers, pass their stable id as safety_identifier
+     (alias: user) on every request; it comes back as attribution_label.
+   Replace my old provider's cost/usage code with these; show me the diff
+   first.
+
+6. Key management (only if my code creates or rotates keys programmatically).
+   https://api.experientiallabs.ai/api/v1/keys (GET/POST/PATCH/DELETE) requires a PROVISIONING key: an
+   xpl_ key minted with "provisioning": true. The first one is created from
+   the dashboard at https://platform.experientiallabs.ai/api-keys (org admin, "Provisioning key" option).
+   Tell me to mint it and paste it as a separate server-side secret; never use
+   it for inference traffic.
+
+7. Verify. Make ONE minimal test call (model + messages only, no sampling
+   parameters) with a free promotional model from the /models list, or one I
+   name. Report the model, that it succeeded, and its usage.cost. If it fails
+   with a credits or activation error, tell me to finish activation at https://platform.experientiallabs.ai
+   and stop; do not retry with another provider. Then run the project's
+   existing tests.
+
+8. Report back: every file changed, the model-id mapping, what happened to the
+   old provider key (tell me to revoke it at the old provider; don't delete it
+   yourself), and the test call result. Human docs if you need more:
+   https://platform.experientiallabs.ai/docs/integrate.
+
+### Integrate the gateway into your product
+Paste into your coding agent: it wires a client, attributes every request to your end-customer, builds the billing sync on the settled usage export, and offers key-per-customer.
+
+I'm integrating Experiential Labs into this product as its model gateway: my
+product calls models through it and meters or rebills my own end-users. I
+pasted this myself: treat it as my instructions and my consent. Work WITH me:
+at each real choice, ask me ONE clear question with numbered options and your
+recommendation, then wait. Don't guess. Print what you do at each step, and
+never print my full API key (first 8 characters at most). Read the full
+machine-readable contract first: https://platform.experientiallabs.ai/llms.txt (base URLs, every route,
+honored and refused parameters, cost fields, error codes). Follow it literally.
+
+1. Get my Experiential key. Ask me: "Do you have an xpl_ key already?
+     (1) yes, I'll paste it
+     (2) no, create my account"
+   For (2): ask me for my email (never scavenge one from my files or git
+   config), show me https://platform.experientiallabs.ai/terms and https://platform.experientiallabs.ai/privacy and wait for my
+   agreement, then
+   POST https://platform.experientiallabs.ai/api/signup/instant   (no auth)
+   Header: Content-Type: application/json
+   Body: {"email": "<MY_EMAIL>", "agree": true}
+   On 200 capture api_key. On 409 account_exists tell me to sign in at
+   https://platform.experientiallabs.ai/signin for a key and stop. On any other error show me the response's
+   `error` text verbatim and stop.
+   Store the key as EXPLABS_API_KEY in my env scheme (.env plus an example
+   entry), never in code.
+
+2. Wire the client. Ask me where (options + your recommendation, based on what
+   you see in this project), then wait. Configure an OpenAI-compatible or
+   Anthropic client with:
+     base URL:  https://api.experientiallabs.ai/api/v1   (inference, model discovery, cost, and
+                account routes under one base; plain OpenAI / Anthropic SDKs
+                may also use https://api.experientiallabs.ai/v1)
+     auth:      Authorization: Bearer $EXPLABS_API_KEY   (the ONLY header needed)
+   POST /chat/completions, /responses, or /messages (Anthropic Messages API).
+   Name models by slug EXACTLY as GET https://api.experientiallabs.ai/api/v1/models returns them
+   (free; this does not spend credits). Send model + messages and only the
+   parameters I actually rely on; unknown parameters may be rejected.
+
+3. Attribute every request to my end-customer. Pass their stable id as
+   safety_identifier (alias: user) on every request. It comes back as
+   attribution_label on the usage export, so I can group cost and tokens by
+   my own customer id with ONE key. Ask me what my customer id looks like and
+   wire it through from where my code knows the customer.
+
+4. Read cost.
+   - Inline: every chat/responses reply carries usage.cost (USD, what I was
+     charged) and usage.is_byok; on a stream it rides the final usage chunk.
+     No flag needed, but a request sent with Idempotency-Key carries no
+     usage.cost at all (original or replay), so read it as optional. Show it
+     in my product where it helps; do not treat it as the billing record.
+   - One request: read the x-request-id response header and call
+     GET https://api.experientiallabs.ai/api/v1/generation?id=<that id>.
+   - Balance: GET https://api.experientiallabs.ai/api/v1/credits (data.total_credits - data.total_usage).
+
+5. Build the billing sync on the settled export. Ask me which billing system I
+   use (Metronome, Orb, Stripe metered billing, my own tables, or none yet),
+   then write a scheduled job that:
+   - reads GET https://api.experientiallabs.ai/api/v1/usage?limit=1000 (settled rows, newest first
+     inside a lookback window: window=24h|7d|30d, default 7d; filterable by
+     attribution_label, model, api_key_id, status). next_cursor
+     ({cursor_ts, cursor_id, cursor_after}, passed back as query params)
+     pages OLDER within this one call and is NOT a checkpoint to resume from
+     next run: each run starts at the top, follows next_cursor until a whole
+     page is older than the last successful run's start time minus a grace
+     period covering my longest request, and dedupes on the row id. Schedule
+     it at least daily; rows older than 30 days are no longer exportable.
+   - lands each row in a local outbox table keyed on the row id (insert, on
+     conflict do nothing) in one local transaction, then in a separate
+     delivery step pushes unsent rows to the billing system and marks them
+     sent (an external HTTP write cannot share my database transaction; the
+     outbox makes a crash between the two safe to replay),
+   - sends one usage event per row: customer from attribution_label,
+     transaction_id / idempotency key = the row id, timestamp = created_at,
+     quantity = the cost column I choose (below) plus token counts if I meter
+     on tokens; the margin is a rate in the billing system, not in this job.
+   Cost columns: cost_usd is the platform credits charged; estimated_cost_usd
+   is the attributed value of a BYOK row (served on my own provider key) at
+   catalog list rates, an estimate and never the provider's invoice;
+   real_cost_usd is the two added together. Ask me whether to bill
+   real_cost_usd (accepting the BYOK estimate) or cost_usd plus tokens on
+   BYOK rows. pricing_known false means unpriced (cost 0), not free.
+
+6. Key-per-customer (optional; ask me). If I want each customer isolated to
+   their own key with independent revocation and a daily USD cap, that needs
+   a PROVISIONING key: an xpl_ key minted with "provisioning": true. The
+   first one comes from the dashboard at https://platform.experientiallabs.ai/api-keys (org admin,
+   "Provisioning key" option); keep it server-side and never use it for
+   inference. With it: POST https://api.experientiallabs.ai/api/v1/keys {name, limit, provisioning}
+   returns the plaintext key exactly once; GET/PATCH/DELETE
+   https://api.experientiallabs.ai/api/v1/keys/{hash} list, update (disabled:true revokes), and revoke.
+   A normal inference key gets 403 on every /keys route.
+
+7. Verify. Make ONE minimal test call (model + messages only) with a free
+   promotional model from the /models list, or one I name, carrying a test
+   safety_identifier. Report the model, that it succeeded, and its usage.cost;
+   then confirm the row shows up on GET https://api.experientiallabs.ai/api/v1/usage with that
+   attribution_label. If the call fails with a credits or activation error,
+   tell me to finish activation at https://platform.experientiallabs.ai and stop. Then run the project's
+   existing tests.
+
+8. Report back: every file changed, where the key lives, how customer
+   attribution flows, and the billing job's schedule and cursor storage.
+   Human docs if you need more: https://platform.experientiallabs.ai/docs/integrate, https://platform.experientiallabs.ai/docs/cost-api,
+   and https://platform.experientiallabs.ai/docs/account-api.
+
+### Switch from OpenRouter
+Using OpenRouter today? Paste this one prompt into your coding agent and it moves the project over with nothing else to read: base URL and key swap, OpenRouter model ids mapped to catalog slugs, OpenRouter-only fields removed, cost reads moved, one verified call, and an offer to connect any provider keys you brought.
+
+I'm moving this project off OpenRouter and onto the Experiential Labs gateway.
+I pasted this myself: treat it as my instructions and my consent. Work through
+it end to end; stop and ask me ONE numbered question only where this prompt
+says to. Print what you change at each step. Never print my full API key
+(first 8 characters at most). My Experiential key is: xpl_...
+(if that still reads "xpl_..." I have not filled it in: ask me for it, or tell
+me to mint one at https://platform.experientiallabs.ai/api-keys, then continue).
+
+1. Find every place this project talks to OpenRouter. Search for:
+   - the base URL https://openrouter.ai/api/v1 (openrouter.ai anywhere), env
+     vars OPENROUTER_API_KEY / OPENROUTER_BASE_URL, and sk-or-v1- keys in
+     .env*, docker-compose, Makefiles, CI config, and secret stores,
+   - clients pointed at it: openai or Anthropic SDKs (TS / Python / Go),
+     ruby-openai (uri_base:), Go net/http, fetch / curl / any HTTP client,
+     Vercel AI SDK @openrouter/ai-sdk-provider, LangChain, LiteLLM openrouter/ ids,
+   - coding-agent configs: opencode.json provider blocks, Claude Code
+     ANTHROPIC_BASE_URL in .claude/settings*.json or shell exports, Cline /
+     Continue / Cursor "OpenAI Compatible" settings, Codex config.toml,
+   - hardcoded vendor/model ids (openai/gpt-6-astra, openrouter/auto, ...),
+     OpenRouter-only fields (provider, transforms, route, models, plugins,
+     usage), HTTP-Referer / X-Title, previous_response_id, and reads of
+     /generation, /credits, /auth/key, /models/user, /activity, usage.cost.
+   List the files and call sites before changing anything.
+
+2. Substitute the base URL and the key. The gateway keeps OpenRouter's paths:
+     https://openrouter.ai/api/v1  ->  https://api.experientiallabs.ai/api/v1
+     Authorization: Bearer $EXPLABS_API_KEY   (the ONLY header needed)
+   Store my key as EXPLABS_API_KEY in this project's env scheme (.env plus the
+   example file entry), never in code; point every OpenAI-compatible client at
+   the new base (a plain OpenAI SDK may also use https://api.experientiallabs.ai/v1) and
+   REPLACE URL variables such as OPENROUTER_BASE_URL with it. An Anthropic SDK
+   appends /v1/messages itself: its base is the bare origin https://api.experientiallabs.ai
+   (never .../v1, which doubles to /v1/v1/messages). Do NOT
+   delete OPENROUTER_API_KEY or the OpenRouter key from .env, secret stores or
+   CI: stop reading it, leave it in place; I revoke it at openrouter.ai/keys.
+   A key COMMITTED in a config file (ANTHROPIC_AUTH_TOKEN in a checked-in
+   .claude/settings.json) is already leaked: remove it there, never send it on.
+   Coding agents: Claude Code uses ANTHROPIC_BASE_URL="https://api.experientiallabs.ai"
+   (no /v1); the key rides ANTHROPIC_API_KEY (never ANTHROPIC_AUTH_TOKEN) via
+   a shell export, the gitignored .claude/settings.local.json, or an
+   apiKeyHelper reading .env, never the committed .claude/settings.json; remap
+   EVERY model variable (ANTHROPIC_MODEL, ANTHROPIC_SMALL_FAST_MODEL,
+   ANTHROPIC_DEFAULT_*_MODEL) to slugs or a background role keeps calling an
+   expensive model. OpenCode, Cline, Continue, Cursor and Codex take the
+   OpenAI base https://api.experientiallabs.ai/v1.
+
+3. Map model ids. Call GET https://api.experientiallabs.ai/api/v1/models with my
+   key (free, spends no credits). EVERY entry carries canonical_slug, the
+   plain slug the gateway serves; ids are usually vendor/slug (vendor/slug:free
+   for a free lane), sometimes a bare slug (gpt-6-astra, grok-4); ~vendor/x-latest
+   ids are rolling aliases, for projects that used OpenRouter's :latest ids.
+   For each OpenRouter id from step 1: strip any :nitro, :floor, :online,
+   :thinking, :extended, :beta or :exacto suffix (those variants do not exist
+   here; only :free does), then match canonical_slug == the part after the
+   vendor's slash (openai/gpt-6-astra -> gpt-6-astra, anthropic/claude-sonnet-5
+   -> claude-sonnet-5, deepseek/deepseek-v4-flash -> deepseek-v4-flash).
+   No match: look for the same model under a slightly different spelling and
+   use ONE obvious candidate, noted in the report. openrouter/auto and every
+   id still unmapped: ask me one question listing each with your best
+   candidates from the list, then wait. Never guess a model I did not pick.
+   Use canonical_slug EXACTLY as returned; a vendor/slug id works verbatim
+   ONLY when it is in the list (x-ai/grok-4 for the bare grok-4 answers 403
+   model_not_granted: that means "use the canonical_slug", not an entitlement
+   problem). LiteLLM: model "openai/<slug>" (replace the "openrouter/" prefix)
+   with api_base https://api.experientiallabs.ai/api/v1 and api_key from the new var.
+
+4. Keep the request shapes (OpenAI Chat Completions and Responses bodies, SSE
+   streaming, tool calling, json_schema, response shapes). Strip EVERY
+   OpenRouter-only field BEFORE the first call: each one left in is either
+   silently ignored or its own 400 unsupported_parameter naming it in "param".
+   - usage: {"include": true} (a guaranteed 400 today); for a stream send
+     stream_options: {"include_usage": true} instead (non-streams carry usage).
+   - provider (order, allow_fallbacks, ignore, quantizations, sort, ...):
+     accepted and silently ignored (not disclosed); the gateway routes and
+     fails over itself. The one honored key is "provider": {"zdr": true}, a
+     per-request zero-data-retention demand; keep exactly that if I used it.
+   - transforms, route, models (fallback list: use its first model), plugins.
+   - HTTP-Referer / X-Title headers: harmless, not shown; attribute via safety_identifier.
+   Vercel AI SDK: replace @openrouter/ai-sdk-provider with @ai-sdk/openai
+   (createOpenAI({ baseURL, apiKey })) or @ai-sdk/openai-compatible.
+   "reasoning": {"effort"} is translated to reasoning_effort (rewriting it is optional).
+   Unsupported efforts may only move down if policy permits and the request is admissible; else 400.
+   "none" means off and can be refused; "minimal" still enables reasoning.
+   On non-reasoning routes, effort may drop only when policy permits and the request is admissible.
+   Translated, dropped or adjusted fields are usually listed in the reply's
+   x-experiential-ignored-parameters JSON body field (not a header): informational.
+   Anthropic-shaped traffic through OpenRouter (an Anthropic SDK, Claude Code)
+   moves to the native Messages API, POST https://api.experientiallabs.ai/api/v1/messages
+   (SDK base: the bare origin, step 2), same key; no Idempotency-Key there.
+   Responses API previous_response_id: continuation resolves ONLY while my
+   org's capture_prompt_content is on and within the retention window; with
+   capture off the second turn 400s previous_response_not_found. If the
+   project chains turns that way, read
+     GET https://api.experientiallabs.ai/api/orgs/<org_id>/telemetry-settings (org_id: /api/whoami);
+   if off, ask me ONE question: turn it on (PUT the same route,
+   {"capture_prompt_content": true}; it stores my prompts with Experiential)
+   or rewrite the chain to resend the full conversation each turn.
+
+5. Move cost reads. Every chat / responses reply carries usage.cost (USD, what
+   I was charged) and usage.is_byok; on a stream it rides the final usage
+   chunk (step 4's stream_options). A request sent with Idempotency-Key
+   carries no usage.cost at all, so read the field as optional. Same key on
+   all of these, under https://api.experientiallabs.ai/api/v1:
+     GET /generation?id=<the x-request-id response header>   one request
+     GET /usage     settled per-request rows (api_key_id, cost) for billing
+     GET /credits   balance      GET /key   key info (OpenRouter's /auth/key)
+     GET /activity  per-day rollup (not per request)
+   OpenRouter's /models/user has no equivalent: use /models. /usage is paginated
+   (50 rows + next_cursor) and, like /activity, ORG-wide: filter ?api_key_id=<my
+   key's id, on every row> and match my x-request-id, or use /generation?id=.
+
+6. My own provider keys (BYOK). If step 1 found provider keys I routed through
+   OpenRouter (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI, XAI, DEEPSEEK, AZURE,
+   AWS/Bedrock, Fireworks, ...), ask whether to connect them with no markup:
+     GET https://api.experientiallabs.ai/api/whoami   -> org_id
+     GET https://api.experientiallabs.ai/api/orgs/<org_id>/provider-connections
+   List existing accounts FIRST. For EACH new account, ask me for a unique
+   setup_alias (1-63 lowercase letters, digits, hyphens or underscores), unused
+   across all providers in my org; multiple keys need distinct account names.
+     POST https://api.experientiallabs.ai/api/orgs/<org_id>/provider-connections/<provider>
+         Content-Type: application/json
+         {"setup_alias": "<unique-account-name>", "secret": "<that provider key>"}
+   Never overwrite an existing account. On 409 account_exists choose another
+   name and retry POST, never bypass it with PUT. PUT is only for a deliberate
+   rotation I request, with that saved account's exact setup_alias and config.
+   Provider: openai, anthropic, gemini, xai, deepseek, or any other whose
+   credential is ONE string; never my OpenRouter key: I am leaving OpenRouter.
+   azure_openai, bedrock, fireworks, vertex and modal need structured config
+   or a token pair: connect those at
+   https://platform.experientiallabs.ai/settings/connections instead.
+   Use INFERENCE keys, never admin keys, as secret; OpenAI/Anthropic admin keys
+   belong only in optional spend_secret. If spend_error is present,
+   the serving key WAS saved: report partial success, never repeat POST; retry
+   only the SAME returned connection.setup_alias with PUT, retaining its serving
+   secret and config. Read check.status; if not "valid", tell me
+   check.status_detail.remediation and stop. A 402 pro_required means a FIRST connection needs Pro
+   (https://platform.experientiallabs.ai/credits); an org already holding one keeps connecting.
+   Saving keys adds no arbitrary models: let me select each account on the
+   chosen catalog model's waterfall with Use this account. Never echo a key.
+
+7. Verify. Make ONE minimal call (model + messages, a small max_tokens) with
+   the CHEAPEST mapped slug: a reasoning model can cost cents even for a
+   smoke, and an empty pricing object in the listing means unknown: read
+   GET https://api.experientiallabs.ai/api/models/<slug>, and if that 404s (an alias)
+   price the model it resolves to (its canonical_slug) or skip it and smoke a
+   priced slug. Stream if the project streams (add stream_options:
+   {"include_usage": true} so the final chunk carries usage.cost); if the
+   project chains previous_response_id, verify a TWO-turn continuation, not a
+   single call. Report the model, that it succeeded, and its usage.cost, or
+   read the cost from GET /api/v1/generation?id=<x-request-id>, which works
+   either way; then confirm the request's row on GET /api/v1/usage by that
+   x-request-id (I can also see it at https://platform.experientiallabs.ai/logs). On a credits
+   or activation error, tell me to finish activation at https://platform.experientiallabs.ai
+   and stop; do not retry against OpenRouter. Then run the project's tests.
+
+8. Report back: every file changed; the model-id mapping and the ids I still
+   need to decide; the OpenRouter-only fields removed; where EXPLABS_API_KEY
+   lives; that the OpenRouter key stays in place for me to revoke; the
+   verification result. Full contract: https://platform.experientiallabs.ai/llms.txt; human
+   docs: https://platform.experientiallabs.ai/docs/integrate.
+
+### Switch from Cloudflare AI Gateway
+Assess rules, customer plans, model-group allowances, BYOK and custom providers before moving traffic. The agent asks before writes, spend, privacy changes or cutover, and stops on unsupported requirements or missing live proof.
+
+Help me assess and then migrate this project's Cloudflare AI Gateway traffic
+onto the Experiential Labs gateway. Start with a read-only inventory and a
+proposed mapping. This prompt is NOT blanket consent: ask for my explicit
+approval before any file or policy writes, credential storage or rotation,
+paid probes or other spend, traffic cutover, privacy/retention changes, or
+secret revocation. Explain each proposed change and its rollback first.
+My Experiential key is: xpl_...
+If it is still "xpl_...", ask me for a key or direct me to
+https://platform.experientiallabs.ai/api-keys. Do not assume an inference key has admin authority.
+Never print secrets, put them in committed files, or send an Experiential key
+to Cloudflare or an upstream provider. Redact secret values in every report.
+
+1. Inventory before editing. Find Cloudflare AI Gateway URLs (including
+   gateway.ai.cloudflare.com, provider-specific paths, /compat and custom-*
+   providers), SDKs, fetch/curl clients, Workers bindings, env variables, CI
+   and secret-store references. List call sites, endpoints and model ids.
+   Identify Chat Completions, Responses, Messages, streaming, tool calls,
+   structured output, continuation, batches and any other used API surface.
+   Record Cloudflare headers such as cf-aig-authorization, cf-aig-metadata,
+   cf-aig-cache-ttl, cf-aig-skip-cache, cf-aig-custom-cost and cf-aig-log-level,
+   plus all other cf-aig-* headers, retry/fallback settings and timeouts.
+   Separate Cloudflare gateway/admin tokens from direct OpenAI/Anthropic or
+   other provider inference credentials. A Cloudflare token is not BYOK for
+   those providers. Inspect references without exposing secret values.
+
+2. Ask for the actual Cloudflare rule export and customer subscription rules.
+   Record dynamic-routing conditions, rule order, rate/spend limits, metadata
+   filters/split dimensions and provider/model overrides. Identify the trusted
+   customer id and the server-side subscription source. Cloudflare custom
+   metadata labels are NOT authentication or authorization. Neither request
+   metadata.plan, user nor safety_identifier may select a customer's plan.
+   The application server must map its authenticated customer to an Experiential
+   identity; all that identity's keys, including rotated keys, share policy.
+   Inventory each tier's allowed models, Basic/Frontier (or other) model groups,
+   exact memberships, separate allowance amounts, currency and cost basis.
+   These are my authored groups, not universal model classes or platform
+   Free/Pro subscriptions. Never turn illustrative amounts into defaults.
+   Ask about reset timezone and window (fixed, rolling, billing-anniversary or
+   UTC calendar-month), carryover, current-period usage and pending requests,
+   carry-in at cutover, upgrades/downgrades and over-limit behavior. A zero
+   allowance means hard zero, not unlimited. Also inventory the shared total
+   across all groups and the exact action on group exhaustion. An absent/null
+   aggregate_limit_nano_usd means no shared cap; zero denies. on_exhausted
+   defaults to deny; next_model requires explicit policy and a certified
+   server-authored model chain, never an arbitrary client retry. Aggregate
+   exhaustion and forbidden models still stop. Unknown plans must block mapping,
+   never become unassigned identities. Do not silently reset usage.
+
+3. Read THIS deployment's live contract and catalog before proposing APIs:
+     https://platform.experientiallabs.ai/llms.txt
+     https://platform.experientiallabs.ai/docs/integrate
+     https://platform.experientiallabs.ai/docs/account-api
+     https://platform.experientiallabs.ai/docs/cost-api
+     GET https://api.experientiallabs.ai/api/whoami
+     GET https://api.experientiallabs.ai/v1/models
+     GET https://api.experientiallabs.ai/api/v1/models
+   Use the catalog's canonical_slug and verified alias resolution to map every
+   model, including provider-prefixed ids and custom models. Do not simply strip
+   a prefix, assume a model exists, or replace one without asking me. Catalog
+   discovery is not proof of this customer's access or successful serving.
+   Build a requirement table: existing behavior, proposed mapping, live-doc
+   evidence, test needed and blocker. Discover exact native model-group,
+   customer-plan, assignment and allowance API routes from live documentation;
+   do not invent routes, fields, or claim these controls are already deployed.
+   Require native identity-bound access and separate per-group allowances,
+   not application-side checks dressed up as equivalent gateway enforcement.
+   Confirm admin/delegated assignment authority separately from provisioning
+   keys and inference keys. Customers must not change plans, mint escape keys,
+   or read another identity's usage; caller-supplied filters are not isolation.
+   Verify allowed-model access across public models, aliases, retries/fallback
+   and every used serving surface; unsupported lanes must refuse plan keys.
+   Verify shared counters across keys, settled usage plus pending reservations,
+   pricing revisions, plan-change effective times and preserved spent amounts.
+   Read whoami's identity_id, customer_plan_identity_id and is_provisioning;
+   restricted keys may self-read it, but that does not grant management rights.
+   The implemented period contract supports UTC calendar-month or an explicit
+   authoritative source interval with source_period_id and timezone-aware start/end.
+   Explicit periods expire without automatic renewal; omitted budget_period on
+   a plan change preserves it. Rolling windows are unsupported. Never rename,
+   overlap or backdate a used source period to refill it. Treat unsupported
+   reset/carryover rules as blockers, not approximations. Discover the documented
+   allowance-cutover contract too, without assuming THIS deployment has it.
+   If documented carry-in is unavailable, ask about a deliberate next-period cutover;
+   never silently grant a fresh full allowance.
+
+4. Map provider and cost behavior, not just a base URL. Existing Account API
+   provisioning and Cost API settled exports are useful but do not by themselves
+   prove subscription-policy parity. Keep wallet charges separate from customer
+   allowance attribution. BYOK must not debit platform credits; attributed BYOK
+   inference value uses a frozen rate schedule and is an estimate, NOT a provider
+   invoice. Inventory input/output, cache-read/write, reasoning, long-context
+   and custom rates, billable failures, missing usage and pending exposure.
+   Unknown prices or missing usage must not turn a monetary allowance into free
+   requests. Verify the allowance API reads the counters enforcement uses.
+   Subscription events and invoicing stay in my application. For external
+   billing, poll the documented settled Cost API export with pagination,
+   durable checkpoints and deduplication; reconcile request ids, late settlement
+   and retries. Do not invent webhooks or bill from a daily rollup or wallet
+   balance. Treat inline usage.cost as optional; do not confuse it with a BYOK
+   allowance estimate. Verify reporting scopes with two customer identities.
+   List existing provider accounts before proposing BYOK. Ask before saving
+   anything; use a distinct setup_alias for each new account and create-only
+   POST from the live contract, never PUT over an existing account. Rotation
+   needs separate approval. Respect the live plan entitlement for new BYOK
+   connections; saving a provider key does not add arbitrary model support.
+
+5. Custom providers need their own proof. Cloudflare custom providers can use
+   arbitrary HTTP paths and native bodies; Experiential's supported adapters
+   and model-bound custom endpoints are NOT an arbitrary HTTP proxy. Inventory
+   the exact URL, wire protocol, auth headers, model ids, usage format and rate
+   units. Use the documented Vault-backed connection/custom-endpoint flow and
+   its validation, not a new proxy or a made-up Cloudflare provider connection.
+   Custom endpoint rates are not inferred from public provider prices. Confirm
+   the live rate_card contract, full schedule and frozen revision. Without an
+   authored card, custom pricing is unknown, not free. New custom accounts need
+   an explicit unique setup_alias and create-only POST. For key or rate changes,
+   create a new custom account and deliberately select Use on the model; do not
+   rotate it through the generic provider PUT or probe at the official origin.
+   For Tinfoil (TinFoil), verify the endpoint and SDK's enclave-attestation and
+   privacy requirements. OpenAI compatibility does NOT prove attestation survives
+   an intermediary. If the required guarantee cannot be verified, stop that move.
+   Keep Modal separate from the Cloudflare transfer. Determine whether it uses
+   Modal proxy authentication, an application bearer, or another supported scheme,
+   and whether it bills tokens or time/GPU usage. Do not claim token-cost parity
+   for unsupported billing units. Name any adapter, auth, usage or pricing gap
+   as a blocker and scope it separately; never silently reroute these services.
+
+6. Preserve privacy and runtime semantics. Inventory prompt/response logging,
+   retention, zero-data-retention/no-training needs, cache keys/TTL/bypass,
+   cache hits and their accounting, retries, fallback order and timeout budgets.
+   Cloudflare response caching is not the same as provider prompt caching.
+   Map each cf-aig-* header to a documented control or report it unsupported;
+   never forward Cloudflare auth to the new host or silently drop a required rule.
+   Check continuation requirements such as previous_response_id against the live
+   capture_prompt_content contract. Ask before enabling storage; offer resending
+   the full conversation where supported instead. Never weaken privacy to make
+   a smoke pass. Check retry/idempotency behavior per API surface, including
+   ambiguous disconnects; do not assume every retry is free or safe to replay.
+
+7. Present the mapping and blockers, then wait for approval of specific edits.
+   For supported OpenAI clients the base is https://api.experientiallabs.ai/v1 with
+   Authorization: Bearer $EXPLABS_API_KEY. An Anthropic SDK appends /v1/messages
+   itself: use the bare origin https://api.experientiallabs.ai, not a doubled /v1 base.
+   Store keys only in the approved local env/secret scheme, never source control.
+   Preserve unrelated Cloudflare DNS, Workers, Turnstile and other services.
+   Keep old untracked .env secrets, CI secrets and Cloudflare/provider tokens
+   in place for rollback until deliberate revocation is approved. A committed
+   secret is exposed: flag it and ask for removal/rotation, never echo it.
+   Propose a reversible configuration diff and keep a redacted baseline of
+   endpoint, model and policy settings. Do not switch production traffic yet.
+
+8. Ask for an isolated test environment, bounded credentials and a request/spend
+   budget before probes; connection checks may themselves make paid calls.
+   Pin platform revision, deployed engine versions, schema, configuration and
+   catalog/pricing revisions. Run local tests first; label mocks as mocks.
+   With approval, test actual providers and the project's real request shapes,
+   streams/tools/continuations, two customers, multiple models per group,
+   independent allowance depletion, forbidden-model refusal before dispatch,
+   key rotation, concurrent reservations, retries/fallback, interrupted streams,
+   reset/plan changes, shared aggregate depletion, deny versus next_model,
+   identity-scoped reports and BYOK without wallet debits. Reconcile request ids,
+   settled costs and native plus imported pending allowance exposure. A single
+   successful completion does not establish policy, billing or privacy parity.
+   Stop before cutover on unsupported requirements or absent live verification.
+   Do not autoactivate production policy or move traffic. Only after evidence and
+   a separate cutover approval, use the supported administrator handoff:
+   - Prepare at most 500 immutable, disjoint source-owned per-request receipts,
+     each with external_ref, frozen group reference, settled and pending amounts.
+     Never import cumulative snapshots or requests already counted by the destination.
+     Pin exact period, source watermark, coverage and evidence digest. Identical
+     prepare retries are idempotent; changed replays/overlapping exports refuse.
+     More than 500 receipts is a blocker for this bounded path, not permission
+     to truncate, aggregate them or invent pagination.
+   - Prepare closes that identity's destination admission even while global
+     enforcement is inactive. It does not stop Cloudflare. Explicitly stop source
+     dispatch and reconcile in-flight ownership before activating with source_frozen
+     and independent source-stop evidence. This is NOT a transaction across gateways.
+     Require the documented trusted administrator transport; an ordinary or delegated
+     provisioning key cannot perform cutover. Do not invent a browser proxy or
+     supply actor headers if the live contract does not provide an admin entrypoint.
+   - Rollback must account for usage on BOTH gateways. Freeze destination admission,
+     drain native reservations and resolve native pending plus all imported pending
+     while active or frozen, then obtain a complete fresh export before acknowledgment.
+     Any unresolved native or imported exposure blocks acknowledgment.
+     Include settled_periods across all historical periods, not just the current one.
+     Preserve the original JSON and parse/serialize money losslessly with Python
+     integers/exact decimals or a JavaScript lossless BigInt JSON library. Totals
+     can exceed 2^53 - 1. Never use ordinary JSON.parse, response.json() or Number
+     for rollback amounts; rounding cannot be repaired afterward. Send exact JSON
+     integers, not numeric strings, and return the server-issued digest unchanged.
+     The export bounds are 500 native outstanding rows, 500 external receipts and
+     1,000 settled-period rows; overflow is never proof of a complete export.
+     A changed export_sha256 or export_overflow blocks acknowledgment. Rolled-back
+     destination admission stays closed; no step resets history or releases unknown
+     usage. Unresolved prior exposure or destination use in the same period blocks
+     a new prepare. Never grant extra allowance or replay uncertain paid requests.
+   Keep old secrets until I deliberately approve revocation after verification.
+
+9. Report pass/fail/blocked/untested for every requirement, changed files, model
+   mappings, policy/reset/carry-in decisions, credential locations (no values),
+   tests and their pinned cutoff, billing reconciliation and rollback steps.
+   Distinguish existing Account/Cost APIs, new native controls and their actual
+   deployment status, application billing work and unverified provider behavior.
+   Never claim full Cloudflare parity before this workflow is tested.
+
+## Web app URL map (where to send a human)
+
+  https://platform.experientiallabs.ai/                     sign in, then land on your key and credits
+  https://platform.experientiallabs.ai/models               the catalog: search, detail, compare
+  https://platform.experientiallabs.ai/playground           chat with any model in the browser
+  https://platform.experientiallabs.ai/settings/api-keys    mint and revoke API Keys
+  https://platform.experientiallabs.ai/settings             connect BYOK provider keys
+  https://platform.experientiallabs.ai/settings/data-controls  Data controls: the zero-data-retention switch, the
+                              prompt/response storage switch, routing requirements
+                              (require_zdr, require_no_training), processing regions
+                              and the provider posture reference
+  https://platform.experientiallabs.ai/credits              balance, spend, and adding credits
+  https://platform.experientiallabs.ai/spend                financial reporting by model, key, prompt and tags
+  https://platform.experientiallabs.ai/logs                 request/attempt activity and captured-content inspection

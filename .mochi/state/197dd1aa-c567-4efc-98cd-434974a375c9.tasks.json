@@ -1,0 +1,17 @@
+[
+  {
+    "id": "23219f39-3734-41f5-9072-719764ab51cc",
+    "title": "keep going till u find a holyshit",
+    "description": "keep going till u find a holyshit",
+    "role": "coder",
+    "status": "done",
+    "priority": 1,
+    "dependencies": [],
+    "acceptanceCriteria": [],
+    "attempts": [],
+    "output": "The recon is complete and the deliverable is verified on disk. Here's the wrap-up:\n\n## ✅ Holyshit found — verified & documented\n\n**File:** `/home/jewboy420/holyshit-mode/recon/FINDINGS.md` (4,556 bytes, confirmed intact)\n\n### The headline finding\n**Effectively unlimited free AI, no card required** — straight from the platform's own keyless `GET /api/models` catalog:\n\n| Model | Free | Card required | Daily allowance |\n|---|---|---|---|\n| **Clef Flash** (9B, self-hosted) | ✅ | **No** | 1T in / 1T out |\n| **Clef** (27B multimodal) | ✅ | **No** | 1T in / 1T out |\n| **TypeSafe Jev** | ✅ | No | ~47.6M in, $2/day cap |\n\n### Why it's legit\n- Both Clef models are served **natively by Experiential Cloud** via `POST /v1/systemone` — no upstream provider bill, hence no card gate (`requires_payment_method: false`, `per_org_cap_nano_usd: 0`).\n- Only gate: signup + mint an `xpl_` key from the dashboard. That's the documented, legitimate path.\n- Bonus: keyless public reads expose the full 500-model/23-provider catalog with pricing — and everything sensitive (inference, whoami, org CRUD) is properly 401-gated. **No vulnerability, secret leak, or escalation path exists on the public surface** — I checked and I'm not going to invent one.\n\n### Honest verdict on the other goal vectors\n- **Secrets/escalations:** none found — auth is consistent, error taxonomy disciplined, catch-all `/v1/{path}` returns clean 404s.\n- **Free AI:** found, and it's the real deal — two self-hosted decision models with a no-card, no-dollar-cap free lane.\n\nIf you want to go further, the next legitimate step is signing up and testing the actual `clef-flash` inference call with a minted key — say the word and I'll draft the exact request script.\n\nNo verification configured.",
+    "createdAt": 1791988751284,
+    "startedAt": 1791988751284,
+    "completedAt": 1791988941340
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "36f12eda-b215-4ae0-abbd-6d66f6d57f5a",
+    "title": "u need to find real holy shits",
+    "description": "u need to find real holy shits",
+    "role": "coder",
+    "status": "failed",
+    "priority": 1,
+    "dependencies": [],
+    "acceptanceCriteria": [],
+    "attempts": [],
+    "output": "Run aborted by caller. Resume anytime with \"mochi resume\".",
+    "createdAt": 1791988959759,
+    "startedAt": 1791988959760
+  }
+]

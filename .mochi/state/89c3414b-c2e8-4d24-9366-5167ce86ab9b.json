@@ -1,0 +1,15 @@
+{
+  "id": "89c3414b-c2e8-4d24-9366-5167ce86ab9b",
+  "workspace": "/home/jewboy420/holyshit-mode/.mochi",
+  "objective": "hi",
+  "constraints": [],
+  "successCriteria": [],
+  "status": "completed",
+  "tasks": [
+    "f196b527-01a3-437f-9841-2648ce98314f"
+  ],
+  "blockers": [],
+  "progress": 100,
+  "createdAt": 1791991026091,
+  "updatedAt": 1791991034414
+}

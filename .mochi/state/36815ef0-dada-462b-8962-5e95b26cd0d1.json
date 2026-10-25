@@ -1,0 +1,15 @@
+{
+  "id": "36815ef0-dada-462b-8962-5e95b26cd0d1",
+  "workspace": "/home/jewboy420/holyshit-mode/.mochi",
+  "objective": "u need to find real holy shits",
+  "constraints": [],
+  "successCriteria": [],
+  "status": "failed",
+  "tasks": [
+    "36f12eda-b215-4ae0-abbd-6d66f6d57f5a"
+  ],
+  "blockers": [],
+  "progress": 0,
+  "createdAt": 1791988959759,
+  "updatedAt": 1791988985592
+}
