@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 aimbot-venv/
 *.env
+.mochi/
