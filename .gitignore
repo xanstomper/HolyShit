@@ -3,3 +3,7 @@ __pycache__/
 aimbot-venv/
 *.env
 .mochi/
+logs/
+reports/
+__pycache__/
+*.pyc
