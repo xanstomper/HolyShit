@@ -109,3 +109,16 @@ only working vantage. All engagement data in `/dev/shm/.dkv/packdraw/`.
 - **§8 coverage verdict:** all 10 classes probed or N/A for the unauth plane; every
   finding ledgered; remaining account-plane tests = operator ask (seed-rotation 2-open
   test, cross-user pusher with session, create-pack EV, battle hash verify).
+
+## 2026-11-03 3AM final: demo inert, PF hypothesis upgraded, T2 stands
+
+- Demo mode: verified INERT for guests (4 click sequences incl post-Continue, DOM dumps,
+  zero network) — no unauth seed-observation path exists.
+- PF algorithm verbatim (from their fairness page): `ticket = (BigInt('0x'+sha512(
+  clientSeed+':'+serverSeed+':'+nonce)) % 1_000_000) + 1`; jackpot = `sha256(eosBlockHash)
+  % totalTickets + 1` with contiguous ticket ranges. Their text: nonce is needed "when
+  server seeds and client seeds remain unchanged, as is the case when opening multiple
+  packs in a single purchase"; the hashed server seed is shown in the account PROFILE
+  before purchase and the unhashed seed exposed after. Account-level seed commitment +
+  nonce-machinery = fixed-seed architecture hypothesis (58-70 if 2-open test confirms
+  non-rotation across purchases). Full verify recipe documented in the ledger class.
