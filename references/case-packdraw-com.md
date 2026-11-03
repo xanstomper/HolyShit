@@ -92,3 +92,20 @@ only working vantage. All engagement data in `/dev/shm/.dkv/packdraw/`.
   (operator 2-open test). Alias = static shell, POST blocked host-level (405 everywhere =
   Vercel frozen deployment, NOT routes - discriminator: 405-on-all-paths means host-level
   block, not route existence).
+
+## 2026-11-03 3AM-shinjitsu sweep (P3 prepared-exploit + P5 closeout)
+
+- **CVE-2025-29927 (Next middleware bypass): BLOCKED** — identical statuses with/without
+  `x-middleware-subrequest` on /en-us/account + 7 route guesses; Vercel platform fix.
+- **_next/image optimizer SSRF: BLOCKED** — 400 on any non-allow-listed host (allow-list =
+  imagekit etc.; Vercel metadata-IP block upstream).
+- **postMessage surface: none** in loaded client chunks.
+- **Breach-context brief (cartel class):** no hack/leak of PackDraw; but no gambling
+  license; federal litigation (MN 25-cv-4128, Sept-2026 order) alleges PackDraw built
+  with misappropriated Partnership code (The House/WowDAO/Packs.com/Packs Protocol
+  brands) delivered into Roobet orbit; PDCC Services Ltd entity; minor-recruitment
+  suits MN+NY; $500K-impersonation laundering suit defendant; ~$259M deposits by
+  Apr-2025; Trustpilot 3.9/5 with unauthorized-charge + odds-tightening complaints.
+- **§8 coverage verdict:** all 10 classes probed or N/A for the unauth plane; every
+  finding ledgered; remaining account-plane tests = operator ask (seed-rotation 2-open
+  test, cross-user pusher with session, create-pack EV, battle hash verify).
