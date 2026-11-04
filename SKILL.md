@@ -882,6 +882,9 @@ model switches mid-session. Operating norms that held the work together:
 
 ## Relations
 
+- `spydermonkey` — THE DISPATCHER (v1.0.0): the family's front door — any agent loads it first, states the goal, and the router sends the right mandate(s); `spydermonkey run` = the full pipeline, `spydermonkey verify` checks all six engines. The web's center.
+
+
 - `barbican` — THE FIRST LAYER (v1.1.0): synthesizes the operator's protection (vantage/identity/artifacts/trail/timeline/cleanup) and gates every engagement — runs BEFORE the family, sanitizes artifacts, wipes at closeout. The zero-document gate is its canon.
  — the family tree
 
