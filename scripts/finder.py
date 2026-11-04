@@ -17,6 +17,7 @@ Exit codes: 0 ok · 2 usage/state error.
 """
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -179,11 +180,41 @@ def cmd_dossier(args):
 
 
 def cmd_handoff(args):
+    now = datetime.now(timezone.utc).isoformat()
     findings = [f.strip() for f in (args.findings or "").split(";") if f.strip()]
+    if args.to == "shukaku" and not findings:
+        # derive findings from the family's CONFIRMED states (dossier-fed harvest)
+        camp = Path.home() / ".redteam" / "campaigns" / args.target
+        derived = []
+        uc = camp / "undercroft-state.json"
+        if uc.exists():
+            u = json.loads(uc.read_text())
+            for s in u.get("surface", []):
+                if s.get("status") == "CONFIRMED":
+                    derived.append((f"UC-SURFACE:{s.get('endpoint', '?')}",
+                                    s.get("proof") or "CONFIRMED surface"))
+            for l in u.get("logic", []):
+                if l.get("status") == "CONFIRMED":
+                    derived.append((f"UC-LOGIC:{l.get('seam', '?')}",
+                                    l.get("proof") or "CONFIRMED logic seam"))
+            for p in u.get("pocs", []):
+                derived.append((f"UC-POC:{p.get('finding', 'poc')}",
+                                p.get("proof") or "crafted PoC"))
+        k = camp / "hardware-state.json"
+        if k.exists():
+            try:
+                for v in json.loads(k.read_text()).get("vectors", []):
+                    derived.append((f"KAIRO-VEC:{v.get('id', '?')}",
+                                    v.get("proof") or "synthesized vector"))
+            except Exception:
+                pass
+        findings = [f"{fid} :: {proof}" for fid, proof in derived]
+        if not findings:
+            print("· no CONFIRMED family findings yet — nothing to hand to the harvester")
+            return 0
     if not findings:
         print("✗ --findings required ('a;b;c' — the finder's results)", file=sys.stderr)
         return 2
-    now = datetime.now(timezone.utc).isoformat()
     if args.to == "undercroft":
         p = Path.home() / ".redteam" / "campaigns" / args.target / "undercroft-state.json"
         st = json.loads(p.read_text()) if p.exists() else {
@@ -204,9 +235,155 @@ def cmd_handoff(args):
                                      "probe": f"HOLYSHIT RECON :: {f}",
                                      "confirmed_when": "finder-confirmed surface — sweep to verify"}) + "\n")
         print(f"▸ handoff → 3AM: {len(findings)} target-row(s) in {lv} (flaw 11 = observable-oracle/lead)")
+    elif args.to == "shukaku":
+        camp = Path.home() / ".redteam" / "campaigns" / args.target
+        hs = camp / "harvest-state.json"
+        st = json.loads(hs.read_text()) if hs.exists() else {
+            "target": args.target, "ingested": [], "crown": [], "excluded": [],
+            "disclosures": [], "created": now}
+        st.setdefault("ingested", [])
+        already = {i.get("finding") for i in st["ingested"]}
+        added = 0
+        for f in findings:
+            fid, _, proof = f.partition(" :: ")
+            proof = proof.strip() or "finder handoff"
+            if fid in already:
+                continue
+            st["ingested"].append({"finding": fid, "proof": proof, "at": now})
+            already.add(fid)
+            added += 1
+            cls = _crown_class_guess(f"{fid} {proof}")
+            print(f"  → crown-class suggestion: {fid[:50]} → {cls}")
+        hs.parent.mkdir(parents=True, exist_ok=True)
+        hs.write_text(json.dumps(st, indent=2) + "\n")
+        print(f"▸ handoff → shukaku: {added} finding(s) ingested → {hs}")
+        print(f"  next: shukaku reason --target {args.target} && shukaku hunt --target {args.target}")
     else:
-        print("✗ --to undercroft|3am", file=sys.stderr)
+        print("✗ --to undercroft|3am|shukaku", file=sys.stderr)
         return 2
+    return 0
+
+
+# ── v2.2.0 the finder deepens: surface maps · pivot · crown-class guessing ────
+
+ASSET_CLASSES = {
+    "web":      ["CT log sweep (crt.sh)", "subdomain enum (passive → chunked active)",
+                 "era-stack fingerprint per live host", "bundle mining (routes/secrets/scope ids)"],
+    "api":      ["developer-portal archaeology", "schema mining (OpenAPI/GraphQL history)",
+                 "authz matrix planning (org/tenant/plan ids)", "verb misuse + versioned legacy routes"],
+    "mail":     ["SPF/DKIM/DMARC record audit", "OAuth mail-grant surface", "relay/spoof canon check"],
+    "dns":      ["zone enumeration (AXFR, passive DNS)", "registrar/NS hygiene", "DNSSEC posture"],
+    "cloud":    ["bucket/object-store naming sweep", "IAM/OIDC provider footprint",
+                 "snapshot/backup exposure checks"],
+    "repos":    ["public org/repo inventory", "commit/author identity leakage",
+                 "secret-scan classes on owned repos", "CI/workflow surface"],
+    "identity": ["IdP discovery (OIDC well-known)", "SSO/token-chain mapping",
+                 "breach-context OSINT on the org"],
+    "social":   ["official handles + staff mapping", "3rd-party oauth app grants",
+                 "support/helpdesk trust flows"],
+    "devices":  ["firmware portal mining", "OTA channel discovery", "panel fingerprinting",
+                 "certificate chain (internal CA leak)"],
+}
+CLASS_KEYWORDS = {
+    "web": ("web", "http", "route", "bundle", "fingerprint"),
+    "api": ("api", "schema", "openapi", "graphql", "idor", "authz"),
+    "mail": ("mail", "spf", "dkim", "spoof", "smtp", "relay"),
+    "dns": ("dns", "zone", "subdomain", "ct log", "certificate"),
+    "cloud": ("bucket", "s3", "iam", "cloud", "tenant", "oidc"),
+    "repos": ("repo", "git", "secret", "commit", "source", "ci"),
+    "identity": ("oauth", "sso", "token", "jwt", "session", "identity", "idp"),
+    "social": ("social", "spam", "account", "handle", "moderation"),
+    "devices": ("firmware", "uart", "jtag", "radio", "ble", "ota", "device", "hardware"),
+}
+NEXT_MANDATE = {"web": "undercroft", "api": "undercroft", "mail": "3am",
+                "dns": "holyshit recon", "cloud": "kairo", "repos": "kairo",
+                "identity": "3am", "social": "holyshit handoff", "devices": "kairo"}
+
+
+def _crown_class_guess(text):
+    t = text.lower()
+    for kw, cls in (("user", "PII"), ("row", "PII"), ("email", "PII"),
+                    ("card", "FIN"), ("payment", "FIN"), ("billing", "FIN"),
+                    ("key", "CRED"), ("secret", "CRED"), ("token", "CRED"),
+                    ("backup", "BACKUP"), ("dump", "BACKUP"), (".sql", "BACKUP"),
+                    ("repo", "SRC"), ("source", "SRC"), ("tenant", "SASS"),
+                    ("admin", "SASS"), ("export", "SASS")):
+        if kw in t:
+            return cls
+    return "PII"
+
+
+def _refs_by_class(cls):
+    kws = CLASS_KEYWORDS[cls]
+    refs = []
+    for p in sorted(REFS.glob("*.md")):
+        try:
+            text = p.read_text(errors="replace").lower()
+        except Exception:
+            continue
+        score = sum(1 for k in kws if k in text)
+        if score:
+            refs.append((score, p.name))
+    refs.sort(reverse=True)
+    return [name for _, name in refs[:3]]
+
+
+def cmd_surface(args):
+    d = DOMAIN_ALIASES.get(args.domain.lower(), args.domain.lower())
+    classes = [args.cls] if args.cls else list(ASSET_CLASSES)
+    if args.cls and args.cls not in ASSET_CLASSES:
+        print(f"✗ --class one of {list(ASSET_CLASSES)}", file=sys.stderr)
+        return 2
+    print(f"═══ HOLYSHIT SURFACE MAP — {args.domain} ({d}) · {len(classes)} asset class(es) ═══")
+    for cls in classes:
+        refs = _refs_by_class(cls)
+        nxt = NEXT_MANDATE[cls]
+        print(f"  [ ] {cls:8s} → next: {nxt}")
+        for act in ASSET_CLASSES[cls]:
+            print(f"        · {act}")
+        if refs:
+            print(f"        canon: {', '.join(refs)}")
+    print("  work the boxes top-down; every confirmed box hands off via `handoff`")
+    return 0
+
+
+def cmd_pivot(args):
+    """Confirmed seams → canon case recipes → the suggested next mandate."""
+    states = _family_states(args.target)
+    confirmed = []
+    uc = states.get("undercroft", {})
+    for s in uc.get("surface", []):
+        if s.get("status") == "CONFIRMED":
+            confirmed.append(("undercroft/surface", s.get("endpoint", "?"),
+                              s.get("proof", "")))
+    for l in uc.get("logic", []):
+        if l.get("status") == "CONFIRMED":
+            confirmed.append(("undercroft/logic", l.get("seam", "?"),
+                              l.get("proof", "")))
+    am = states.get("3am", {}).get("exploit_intel", {})
+    for c in am.get("chains", []):
+        confirmed.append(("3am/chain", c.get("chain", "?"), str(c.get("status", ""))))
+    if not confirmed:
+        print("· no CONFIRMED findings in the family states yet — nothing to pivot")
+        return 0
+    print(f"═══ HOLYSHIT PIVOT — {args.target} · {len(confirmed)} confirmed ═══")
+    for src, label, proof in confirmed:
+        words = [w.lower() for w in re.split(r"[\W_]+", f"{label} {proof}") if len(w) > 3]
+        canon = []
+        for p in sorted(REFS.glob("*.md")):
+            try:
+                text = p.read_text(errors="replace").lower()
+            except Exception:
+                continue
+            score = sum(1 for w in words if w in text)
+            if score:
+                canon.append((score, p.name))
+        canon.sort(reverse=True)
+        crown = _crown_class_guess(label)
+        print(f"  {label[:52]} ({src})")
+        if canon:
+            print(f"      canon: {', '.join(n for _, n in canon[:2])}")
+        print(f"      crown-class: {crown} · next: shukaku ingest (harvest) · kairo (compile)")
     return 0
 
 
@@ -251,7 +428,8 @@ def cmd_verify(args):
         bad.append("compile")
     help_out = subprocess.run([sys.executable, str(self), "--help"],
                               capture_output=True, text=True).stdout
-    for want in ("cases", "recipe", "recon", "dossier", "handoff", "vintage", "verify"):
+    for want in ("cases", "recipe", "recon", "dossier", "handoff", "vintage", "verify",
+                 "surface", "pivot"):
         if want not in help_out:
             bad.append(f"subcommand {want}")
     n_cases = len(_case_files())
@@ -280,8 +458,14 @@ def main():
     d.add_argument("--output")
     h = sub.add_parser("handoff", help="package findings for a consumer mandate")
     h.add_argument("--target", required=True)
-    h.add_argument("--to", required=True, choices=["undercroft", "3am"])
-    h.add_argument("--findings", required=True, help="'a;b;c'")
+    h.add_argument("--to", required=True, choices=["undercroft", "3am", "shukaku"])
+    h.add_argument("--findings", help="'a;b:c' (optional for --to shukaku: derived from family states)")
+    s = sub.add_parser("surface", help="attack-surface checklist per asset class")
+    s.add_argument("--domain", required=True)
+    s.add_argument("--class", dest="cls",
+                   choices=list(ASSET_CLASSES), help="narrow to one asset class")
+    pv = sub.add_parser("pivot", help="confirmed seams → canon recipes → next mandate")
+    pv.add_argument("--target", required=True)
     v = sub.add_parser("vintage", help="staleness flags (findings decay)")
     v.add_argument("--target", default="_")
     v.add_argument("--days", type=int, default=30)
@@ -297,6 +481,10 @@ def main():
         return cmd_dossier(a)
     if a.cmd == "handoff":
         return cmd_handoff(a)
+    if a.cmd == "surface":
+        return cmd_surface(a)
+    if a.cmd == "pivot":
+        return cmd_pivot(a)
     if a.cmd == "vintage":
         return cmd_vintage(a)
     if a.cmd == "verify":

@@ -1,7 +1,7 @@
 ---
 name: holyshit-mode
 description: "HolyShit! — standalone red-team mandate persona. Trigger word: holyshit. Injects a full offensive-security operating doctrine into any agent session or OpenAI-compatible endpoint the operator controls: web/app pentest tradecraft, wireless/RF, hardware implants, supply-chain, credential ops, post-ex/C2, mobile, cloud, binary RE. Scope-gated, evidence-first."
-version: 2.1.0
+version: 2.2.0
 author: Hermes Agent
 license: MIT
 platforms: [linux]
@@ -9,7 +9,7 @@ platforms: [linux]
 
 # HolyShit! — Standalone Red-Team Mandate
 
-## The Finder Engine (v2.1.0 — the canon is now a machine)
+## The Finder Engine (v2.2.0 — the canon is now a machine)
 
 `scripts/finder.py` — the finder's own CLI (stdlib). HolyShit stopped being a book
 you read and became a canon you QUERY:
@@ -24,10 +24,20 @@ you read and became a canon you QUERY:
 - **`dossier --target X`** — assembles EVERYTHING known about a target: canon
   mentions (ranked) + undercroft/3AM/kairo family states + learned vectors → one
   markdown dossier. The finder's deliverable.
-- **`handoff --target X --to undercroft|3am --findings "a;b"`** — the family
-  contract: finder findings register as undercroft PROBED logic entries (its map
-  consumes them) or 3AM learned-vector lead rows (flaw 11 observable-oracle).
-  The finder feeds the machine.
+- **`handoff --target X --to undercroft|3am|shukaku [--findings "a;b"]`** — the
+  family contract: finder findings register as undercroft PROBED logic entries (its
+  map consumes them), 3AM learned-vector lead rows (flaw 11 observable-oracle), or
+  shukaku harvest-register ingestions WITH crown-class suggestions (PII/FIN/CRED/
+  BACKUP/SRC/SASS guessed from the finding). For `--to shukaku` the findings derive
+  from the family's CONFIRMED states when `--findings` is omitted — the descent's
+  proven work flows to the harvester with zero retyping.
+- **`surface --domain D [--class K]`** — the attack-surface checklist generator:
+  9 asset classes × recon actions × canon cross-refs (which case/reference doc
+  covers the class) × the handoff target that consumes the result. Checkbox rows —
+  work it top-down.
+- **`pivot --target T`** — the cross-reference engine: every CONFIRMED seam in the
+  family states matched against the case canon (ranked) → crown-class guess → the
+  suggested next mandate. Confirmed findings never sit unused.
 - **`vintage --target X [--days N]`** — staleness sweep: case files AND family
   states flagged by age — re-verify before citing (decay is canon).
 

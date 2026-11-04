@@ -66,6 +66,24 @@ jobs:
           echo "$REPORT" | grep -q "auto-probe" || (echo "::error::report missing class"; exit 1)
           echo "auto-persist ledger write: PASS"
 
+      - name: Finder engine smoke tests
+        run: |
+          set -e
+          export HOME="$RUNNER_TEMP/hs-home"
+          mkdir -p "$HOME"
+          S=scripts/finder.py
+          python3 -m py_compile $S
+          python3 $S --help > /dev/null
+          python3 $S verify | grep -q 'ALL PASS'
+          python3 $S surface --domain demo.com --class cloud | grep -q 'surface map'
+          python3 $S surface --domain demo.com | grep -q '9 asset class'
+          mkdir -p "$HOME/.redteam/campaigns/demo"
+          printf '{"target":"demo","surface":[{"endpoint":"/admin/export","kind":"admin","status":"CONFIRMED","proof":"HTTP 200","at":"x"}],"logic":[],"pocs":[],"code":[]}' > "$HOME/.redteam/campaigns/demo/undercroft-state.json"
+          python3 $S handoff --target demo --to shukaku | grep -q 'crown-class suggestion'
+          test -f "$HOME/.redteam/campaigns/demo/harvest-state.json"
+          python3 $S pivot --target demo | grep -q 'crown-class'
+          echo "finder engine: PASS"
+
       - name: Check for leaked secrets
         run: |
           if grep -rniE "sk-[a-z0-9]{20,}|gho_[a-z0-9]{20,}|api[_-]?key.*=.*['\"][a-z0-9]{20,}|bearer [a-z0-9]{20,}" \

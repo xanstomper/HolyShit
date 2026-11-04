@@ -1,7 +1,31 @@
-# HolyShit! — Red-Team Mandate & Engagement Framework
+<div align="center">
 
-**Version:** 2.0.0  
-**Platform:** Linux (any OpenAI-compatible endpoint)
+# 💣 HOLYSHIT!
+
+### *The Finder — the canon that makes the whole family smarter.*
+
+A **Holy Shit** is a finding that changes the risk calculus of an entire engagement —
+and this repo is the machine that finds, indexes, prices, and hands them off.
+
+[![Version](https://img.shields.io/badge/version-2.2.0-blueviolet?style=for-the-badge)](#the-finder-engine)
+[![Python](https://img.shields.io/badge/python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
+[![Platform](https://img.shields.io/badge/platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](#quick-start)
+[![Case canon](https://img.shields.io/badge/case%20canon-31%20files%20·%20104K-B8860B?style=for-the-badge)](references)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+[![CI](https://github.com/xanstomper/HolyShit/actions/workflows/verify.yml/badge.svg)](https://github.com/xanstomper/HolyShit/actions/workflows/verify.yml)
+[![Use](https://img.shields.io/badge/use-AUTHORIZED%20TARGETS%20ONLY-crimson?style=for-the-badge)](#scope-gate)
+
+**THE FAMILY** — six siblings and the dispatcher, one click each:
+
+[![00 BARBICAN · the shield](https://img.shields.io/badge/00-BARBICAN%20·%20the%20shield-2E4057?style=for-the-badge)](https://github.com/xanstomper/barbican)
+[![01 3AM · the performer](https://img.shields.io/badge/01-3AM%20·%20the%20performer-8B0000?style=for-the-badge)](https://github.com/xanstomper/3am-shinjitsu)
+[![02 KAIRO · the synthesizer](https://img.shields.io/badge/02-KAIRO%20·%20the%20synthesizer-6B8E23?style=for-the-badge)](https://github.com/xanstomper/kairo)
+[![03 UNDERCROFT · the descent](https://img.shields.io/badge/03-UNDERCROFT%20·%20the%20descent-4B0082?style=for-the-badge)](https://github.com/xanstomper/undercroft)
+[![05 SHIKI · the command](https://img.shields.io/badge/05-SHIKI%20·%20the%20command-111111?style=for-the-badge)](https://github.com/xanstomper/shiki)
+[![06 SHUKAKU · the harvester](https://img.shields.io/badge/06-SHUKAKU%20·%20the%20harvester-8B4513?style=for-the-badge)](https://github.com/xanstomper/shukaku)
+[![SPYDERMONKEY · the dispatcher](https://img.shields.io/badge/🕷️-SPYDERMONKEY%20·%20the%20dispatcher-blueviolet?style=for-the-badge)](https://github.com/xanstomper/spydermonkey)
+
+</div>
 
 ---
 
@@ -83,6 +107,24 @@ HolyShit! is a **mandate persona** — a system-prompt payload plus an operating
 **What it is NOT:** a jailbreak for hosted third-party APIs. Pointing the mandate at a provider's cloud endpoint to defeat their deployed safety stack is service abuse, not pentesting. The mandate is for infrastructure the operator runs.
 
 ---
+
+## The Finder Engine (the canon is a machine)
+
+`scripts/finder.py` — stdlib CLI over the case canon:
+
+```bash
+python3 scripts/finder.py cases                    # 31 case files + vintage flags
+python3 scripts/finder.py recipe --query "cookie toss"   # ranked full-text canon search
+python3 scripts/finder.py recon --domain web       # per-domain discovery checklist
+python3 scripts/finder.py surface --domain acme.com --class cloud   # 9-class surface map
+python3 scripts/finder.py dossier --target acme    # everything known → one markdown
+python3 scripts/finder.py pivot  --target acme     # confirmed seams → canon → next mandate
+python3 scripts/finder.py handoff --target acme --to shukaku   # findings → harvest register (with crown-class guesses)
+python3 scripts/finder.py vintage --target acme    # staleness sweep (findings decay)
+```
+
+The finder feeds the machine: every confirmed box hands off to undercroft/3AM/
+shukaku — nothing sits unused, and the canon cross-references itself.
 
 ## Architecture
 
