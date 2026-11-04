@@ -880,7 +880,10 @@ model switches mid-session. Operating norms that held the work together:
 - **Keep the local skill, the repo, and the README file-count table in sync** after each
   change (line counts drift; verify with `wc -l` not guesses).
 
-## Relations — the family tree
+## Relations
+
+- `barbican` — THE FIRST LAYER (v1.1.0): synthesizes the operator's protection (vantage/identity/artifacts/trail/timeline/cleanup) and gates every engagement — runs BEFORE the family, sanitizes artifacts, wipes at closeout. The zero-document gate is its canon.
+ — the family tree
 
 - `3am-shinjitsu` — **3AM Shinjitsu (真実)**, the engine branch: speed doctrine,
   universal coverage (U01–U16), synthesis matrix (20×15 → 59 pairs), takeover layer
