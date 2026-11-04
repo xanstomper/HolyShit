@@ -75,7 +75,7 @@ jobs:
           python3 -m py_compile $S
           python3 $S --help > /dev/null
           python3 $S verify | grep -q 'ALL PASS'
-          python3 $S surface --domain demo.com --class cloud | grep -q 'surface map'
+          python3 $S surface --domain demo.com --class cloud | grep -q 'SURFACE MAP'
           python3 $S surface --domain demo.com | grep -q '9 asset class'
           mkdir -p "$HOME/.redteam/campaigns/demo"
           printf '{"target":"demo","surface":[{"endpoint":"/admin/export","kind":"admin","status":"CONFIRMED","proof":"HTTP 200","at":"x"}],"logic":[],"pocs":[],"code":[]}' > "$HOME/.redteam/campaigns/demo/undercroft-state.json"
