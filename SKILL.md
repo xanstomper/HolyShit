@@ -1,13 +1,35 @@
 ---
 name: holyshit-mode
 description: "HolyShit! — standalone red-team mandate persona. Trigger word: holyshit. Injects a full offensive-security operating doctrine into any agent session or OpenAI-compatible endpoint the operator controls: web/app pentest tradecraft, wireless/RF, hardware implants, supply-chain, credential ops, post-ex/C2, mobile, cloud, binary RE. Scope-gated, evidence-first."
-version: 2.0.0
+version: 2.1.0
 author: Hermes Agent
 license: MIT
 platforms: [linux]
 ---
 
 # HolyShit! — Standalone Red-Team Mandate
+
+## The Finder Engine (v2.1.0 — the canon is now a machine)
+
+`scripts/finder.py` — the finder's own CLI (stdlib). HolyShit stopped being a book
+you read and became a canon you QUERY:
+
+- **`cases [--days N]`** — the case index with vintage flags (31 cases; anything
+  older than N days is flagged stale — findings decay).
+- **`recipe --query "words"`** — ranked full-text search across the ENTIRE canon
+  (case files + technique refs). Verified: "cookie toss" → 28 files, the
+  cookie-toss recipe itself ranked with line numbers.
+- **`recon --domain X`** — the finder's per-domain discovery checklist (web, saas,
+  fintech, gaming, social, infra): every pass to run before any probe fires.
+- **`dossier --target X`** — assembles EVERYTHING known about a target: canon
+  mentions (ranked) + undercroft/3AM/kairo family states + learned vectors → one
+  markdown dossier. The finder's deliverable.
+- **`handoff --target X --to undercroft|3am --findings "a;b"`** — the family
+  contract: finder findings register as undercroft PROBED logic entries (its map
+  consumes them) or 3AM learned-vector lead rows (flaw 11 observable-oracle).
+  The finder feeds the machine.
+- **`vintage --target X [--days N]`** — staleness sweep: case files AND family
+  states flagged by age — re-verify before citing (decay is canon).
 
 ## Overview
 
@@ -864,12 +886,11 @@ model switches mid-session. Operating norms that held the work together:
   universal coverage (U01–U16), synthesis matrix (20×15 → 59 pairs), takeover layer
   (T1–T7), press-button loop (`sweep`), growth loop (`learn→promote`), zero-document
   clarify gate. The clock + the factory.
-- `kairo` — **KAIRO (回路)**, the metal branch: offensive hardware, embedded, firmware,
-  wireless, OT, implant analysis (v1.0.0). Depth module for hardware planes when a
-  case file names devices.
+- `kairo` — **KAIRO (回路)**, THE SYNTHESIZER (v2.0.0): the family's forge — ingests
+  all findings, synthesizes attacks (documented classes + five-gene), compiles per
+  consumer (3AM rows · undercroft crafts · holyshit recipes), distributes in one shot.
+  Hardware/embedded/radio is one of its synthesis domains.
 - Tree: HolyShit (the book) · 3AM (the engine) · KAIRO (the metal). All branches
   offensive, all gated by the family's recorded-declaration contract.
-- `shukaku` — **SHUKAKU (収穫)**, the harvester branch (v1.0.0): post-compromise data
-  validation — catalog what an attacker could take (read-only, counts not contents),
-  price it (extortion-economy ESTIMATE ladder), map the disclosure obligation.
-  Roles: HolyShit (searcher) · 3AM (attacker) · SHUKAKU (harvester).
+- `shiki` — **SHIKI (指揮)**, the command branch (v1.0.0): decomposes an estate into parallel attack lanes and dispatches them across the family — HolyShit (breacher) · 3AM (assault engine) · SHIKI (command) · KAIRO (metal lane).
+- `undercroft` — **UNDERCROFT**, the custom-surface branch (v2.0.0): attacks the hidden level beneath any system's documented surface — bespoke code, shadow endpoints, rules/value flows, crafted PoCs. HolyShit recon feeds its map.
